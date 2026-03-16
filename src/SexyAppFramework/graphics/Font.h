@@ -35,6 +35,7 @@ namespace Sexy
 
 class Graphics;
 
+#define Font _Font
 class _Font
 {
 public:
