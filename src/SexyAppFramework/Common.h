@@ -59,6 +59,8 @@
 #undef min
 #undef max
 
+typedef std::string SexyString;
+
 // Define unreachable()
 #ifdef _MSC_VER
 #include <direct.h>
