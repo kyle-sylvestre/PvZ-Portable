@@ -26,7 +26,105 @@
 #include "SDLSoundInstance.h"
 #include "paklib/PakInterface.h"
 
+#include "ogg/ivorbiscodec.h"
+#include "ogg/ivorbisfile.h"
+
 using namespace Sexy;
+
+int ov_pak_open(PFILE *f,OggVorbis_File *vf,char *initial,long ibytes){
+    const auto ov_seek_impl = [](void *file,ogg_int64_t off,int whence) -> int
+    {
+        if(file == NULL)return(-1);
+        return p_fseek((PFILE *)file,(long)off,whence);
+    };
+    const auto ov_read_impl = [](void *p, size_t sz, size_t n, void *file) -> size_t
+    {
+        return p_fread(p, (int)sz, (int)n, (PFILE*)file);
+    };
+    const auto ov_close_impl = [](void *p) -> int
+    {
+        return p_fclose((PFILE *)p);
+    };
+    const auto ov_tell_impl = [](void *p) -> long
+    {
+        return p_ftell((PFILE *)p);
+    };
+
+    ov_callbacks callbacks = {
+        ov_read_impl,
+        ov_seek_impl,
+        ov_close_impl,
+        ov_tell_impl,
+    };
+
+    return ov_open_callbacks((void *)f, vf, initial, ibytes, callbacks);
+}
+
+#if 1
+Mix_Chunk *TREMOR_LoadOGG(const std::string& theFilename)
+{
+    OggVorbis_File vf = {};
+    int current_section = 0;
+    Mix_Chunk *result = NULL;
+
+    PFILE *aFile = p_fopen(theFilename.c_str(),"rb");
+    if (aFile)
+    {
+        if(ov_pak_open(aFile, &vf, NULL, 0) >= 0)
+        {
+            vorbis_info *anInfo = ov_info(&vf,-1);
+            int pcm_total = (int)ov_pcm_total(&vf,-1);
+            if (anInfo && pcm_total >= 0)
+            {
+                int aLenBytes = pcm_total * anInfo->channels * 2;
+                
+                int freq; uint16_t format; int channels;
+                Mix_QuerySpec(&freq, &format, &channels);
+                
+                int srcfreq; uint16_t srcformat; int srcchannels;
+                srcfreq = anInfo->rate; srcformat = AUDIO_S16LSB; srcchannels = anInfo->channels;
+                
+                SDL_AudioCVT wavecvt = {};
+                SDL_BuildAudioCVT(&wavecvt, srcformat, srcchannels, srcfreq, format, channels, freq);
+                wavecvt.len = aLenBytes;
+                wavecvt.buf = (Uint8*)SDL_malloc(wavecvt.len * wavecvt.len_mult);
+                
+                if (wavecvt.buf)
+                {
+                    memset(wavecvt.buf, 0, aLenBytes);
+                    
+                    unsigned char *aPtr = wavecvt.buf;
+                    int aNumBytes = aLenBytes;
+                    while (aNumBytes > 0)
+                    {
+                        long ret=ov_read(&vf,(char*)aPtr,aNumBytes,&current_section);
+                        if (ret == 0)
+                            break;
+                        else if (ret < 0)
+                            break;
+                        else
+                        {
+                            aPtr += ret;
+                            aNumBytes -= ret;
+                        }
+                    }
+                    SDL_ConvertAudio(&wavecvt);
+                    result = Mix_QuickLoad_RAW(wavecvt.buf, wavecvt.len_cvt);
+
+                    // TODO: free after Mix_FreeChunk SDL_free(bytes);
+                }
+            }
+            // p_fclose called by callback
+            ov_clear(&vf);
+        }
+        else
+        {
+            p_fclose(aFile);
+        }
+    }
+    return result;
+}
+#endif
 
 SDLSoundManager::SDLSoundManager()
 {
@@ -280,7 +378,10 @@ bool SDLSoundManager::LoadSound(intptr_t theSfxID, const std::string& theFilenam
 		p_fread(data, 1, fileSize, fp);
 		p_fclose(fp);
 
-		mSourceSounds[theSfxID] = Mix_LoadWAV_RW(SDL_RWFromConstMem(data, fileSize), 1);
+        if (0 == strcmp(formats[i], ".ogg"))
+            mSourceSounds[theSfxID] = TREMOR_LoadOGG(aFilename);
+        else
+            mSourceSounds[theSfxID] = Mix_LoadWAV_RW(SDL_RWFromConstMem(data, fileSize), 1);
 		delete[] data;
 
 		if (mSourceSounds[theSfxID]) break;
