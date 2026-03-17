@@ -59,7 +59,15 @@
 #undef min
 #undef max
 
+#define _S(x) x
 typedef std::string SexyString;
+typedef char SexyChar;
+typedef time_t __time64_t;
+typedef void *HWND, *HFONT;
+typedef unsigned int DWORD;
+#define _time64 time
+#define _localtime64 localtime
+#define stricmp strcasecmp
 
 // Define unreachable()
 #ifdef _MSC_VER
@@ -157,6 +165,7 @@ std::string			XMLEncodeString(const std::string& theString);
 bool				Deltree(const std::string& thePath);
 bool				FileExists(const std::string& theFileName);
 void				MkDir(const std::string& theDir);
+bool 				ChDir(const std::string& theDir);
 std::string			GetFileName(const std::string& thePath, bool noExtension = false);
 std::string			GetFileDir(const std::string& thePath, bool withSlash = false);
 std::string			RemoveTrailingSlash(const std::string& theDirectory);
