@@ -285,6 +285,13 @@ void Sexy::MkDir(const std::string& theDir)
 	std::filesystem::create_directories(PathFromU8(theDir), ec);
 }
 
+bool Sexy::ChDir(const std::string& theDir)
+{
+	std::error_code ec;
+	std::filesystem::current_path(theDir, ec);
+	return (!!ec);
+}
+
 std::string Sexy::GetFileName(const std::string& thePath, bool noExtension)
 {
 	std::filesystem::path path = PathFromU8(thePath);
