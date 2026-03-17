@@ -75,6 +75,7 @@ public:
 	// Rotate has been replaced by RotateRad.  
 	// NOTE:  If you had Rotate(angle) you should now use RotateRad(-angle).  
 	// This is to make positive rotations go counter-clockwise when using screen coordinates.
+	void Rotate(float angle) { RotateRad(-angle); }
 	void RotateRad(float rot); 
 	void RotateDeg(float rot);
 	void Scale(float sx, float sy);
