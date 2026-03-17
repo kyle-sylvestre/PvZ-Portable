@@ -2294,7 +2294,42 @@ void SexyAppBase::SetAlphaDisabled(bool isDisabled)
 
 void SexyAppBase::EnforceCursor()
 {
-	// Cursor enforcement not implemented
+	static SDL_Cursor *cursor = NULL;
+	SDL_FreeCursor(cursor);
+	cursor = NULL;
+	if (mCustomCursorsEnabled && mCursorImages[mCursorNum])
+	{
+		MemoryImage *img = (MemoryImage *)mCursorImages[mCursorNum];
+        SDL_Surface* surf = SDL_CreateRGBSurfaceWithFormat(
+            0, img->GetWidth(), img->GetHeight(), 32, SDL_PIXELFORMAT_BGRA32
+        );
+        if (surf)
+        {
+            memcpy(surf->pixels, img->mBits, img->GetWidth() * img->GetHeight() * 4);
+            cursor = SDL_CreateColorCursor(surf, img->GetWidth()/2, img->GetHeight()/2);
+            SDL_SetCursor(cursor);
+            SDL_FreeSurface(surf);
+        }
+	}
+	else
+	{
+        SDL_SystemCursor sys = (mCursorNum == CURSOR_POINTER) 		? SDL_SYSTEM_CURSOR_ARROW :
+                               (mCursorNum == CURSOR_HAND) 			? SDL_SYSTEM_CURSOR_HAND :
+                               (mCursorNum == CURSOR_DRAGGING) 		? SDL_SYSTEM_CURSOR_ARROW :
+                               (mCursorNum == CURSOR_TEXT) 			? SDL_SYSTEM_CURSOR_IBEAM :
+                               (mCursorNum == CURSOR_CIRCLE_SLASH) 	? SDL_SYSTEM_CURSOR_NO :
+                               (mCursorNum == CURSOR_SIZEALL) 		? SDL_SYSTEM_CURSOR_SIZEALL :
+                               (mCursorNum == CURSOR_SIZENESW) 		? SDL_SYSTEM_CURSOR_SIZENESW:
+                               (mCursorNum == CURSOR_SIZENS) 		? SDL_SYSTEM_CURSOR_SIZENS:
+                               (mCursorNum == CURSOR_SIZENWSE) 		? SDL_SYSTEM_CURSOR_SIZENWSE:
+                               (mCursorNum == CURSOR_SIZEWE) 		? SDL_SYSTEM_CURSOR_SIZEWE:
+                               (mCursorNum == CURSOR_WAIT) 			? SDL_SYSTEM_CURSOR_WAIT:
+                               (mCursorNum == CURSOR_NONE) 			? SDL_SYSTEM_CURSOR_ARROW :
+                               (mCursorNum == CURSOR_CUSTOM) 		? SDL_SYSTEM_CURSOR_ARROW : SDL_SYSTEM_CURSOR_ARROW;
+		cursor = SDL_CreateSystemCursor(sys);
+        SDL_SetCursor(cursor);
+	}
+	SDL_ShowCursor((mCursorNum != CURSOR_NONE) ? SDL_ENABLE : SDL_DISABLE);
 }
 
 void SexyAppBase::ProcessSafeDeleteList()
