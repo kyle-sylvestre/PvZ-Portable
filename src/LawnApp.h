@@ -23,7 +23,7 @@
 #define __LAWNAPP_H__
 
 #include "ConstEnums.h"
-#include "SexyAppFramework/SexyApp.h"
+#include "SexyApp.h"
 #include "Sexy.TodLib/TodFoley.h"
 
 class Board;
