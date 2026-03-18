@@ -1713,7 +1713,8 @@ bool SexyAppBase::DrawDirtyStuff()
 		uint32_t aPreScreenBltTime = SDL_GetTicks();
 		mLastDrawTick = aPreScreenBltTime;
 
-		Redraw(nullptr);		
+		if (drewScreen)
+			Redraw(nullptr);		
 
 		// This is our one UpdateFTimeAcc if we are vsynched
 		UpdateFTimeAcc(); 

@@ -318,6 +318,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 					case SDL_WINDOWEVENT_RESIZED:
 						mGLInterface->UpdateViewport();
 						mWidgetManager->Resize(mScreenBounds, mGLInterface->mPresentationRect);
+						mWidgetManager->MarkAllDirty();
 						break;
 
 					case SDL_WINDOWEVENT_MINIMIZED:
