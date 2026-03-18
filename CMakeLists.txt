@@ -237,6 +237,7 @@ if(EMSCRIPTEN)
 		"SHELL:-sINVOKE_RUN=0"
 		"SHELL:-lidbfs.js"
 		"SHELL:--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/wasm/shell.html"
+		"SHELL:-sSTACK_SIZE=4MB"
 	)
 	set_target_properties(pvz-portable PROPERTIES SUFFIX ".html")
 else()
