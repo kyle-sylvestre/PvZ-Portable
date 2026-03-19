@@ -1524,7 +1524,6 @@ void ImageFont::DrawStringEx(Graphics* g, int theX, int theY, const std::string&
 		int aMaxXPos = aCurXPos;
 
 		ActiveFontLayerList::iterator anItr = mActiveLayerList.begin();
-		int layerOrderOffset = 0;
 		while (anItr != mActiveLayerList.end())
 		{
 			ActiveFontLayer* anActiveFontLayer = &*anItr;
@@ -1577,7 +1576,7 @@ void ImageFont::DrawStringEx(Graphics* g, int theX, int theY, const std::string&
 			aColor.mBlue = std::min((theColor.mBlue * anActiveFontLayer->mBaseFontLayer->mColorMult.mBlue / 255) + anActiveFontLayer->mBaseFontLayer->mColorAdd.mBlue, 255);
 			aColor.mAlpha = std::min((theColor.mAlpha * anActiveFontLayer->mBaseFontLayer->mColorMult.mAlpha / 255) + anActiveFontLayer->mBaseFontLayer->mColorAdd.mAlpha, 255);
 
-			int anOrder = layerOrderOffset + anActiveFontLayer->mBaseFontLayer->mBaseOrder + anActiveFontLayer->mBaseFontLayer->GetCharData(aChar)->mOrder;
+			int anOrder = anActiveFontLayer->mBaseFontLayer->mBaseOrder + anActiveFontLayer->mBaseFontLayer->GetCharData(aChar)->mOrder;
 
 			if (aCurPoolIdx >= POOL_SIZE)
 				break;
@@ -1624,7 +1623,6 @@ void ImageFont::DrawStringEx(Graphics* g, int theX, int theY, const std::string&
 				aMaxXPos = aLayerXPos;
 
 			anItr++;
-			layerOrderOffset++;
 		}
 
 		aCurXPos = aMaxXPos;
