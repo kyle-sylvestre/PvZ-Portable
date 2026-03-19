@@ -379,7 +379,9 @@ bool XMLParser::NextElement(XMLElement* theElement)
 					}
 					else
 					{
-						if (error) Fail("Illegal Character");
+						if (!p_feof(mFile) && error)
+							Fail("Illegal Character");
+                        
 						aVal = 0;
 					}
 				}
