@@ -36,6 +36,7 @@ static int EncodeUTF8(uint32_t code, char out[4])
 	}
 	if (code <= 0x7FF)
 	{
+		out[0] = static_cast<char>(0xC0 | (code >> 6));
 		out[1] = static_cast<char>(0x80 | (code & 0x3F));
 		return 2;
 	}
@@ -49,7 +50,6 @@ static int EncodeUTF8(uint32_t code, char out[4])
 	if (code <= 0x10FFFF)
 	{
 		out[0] = static_cast<char>(0xF0 | (code >> 18));
-					char c;
 		out[1] = static_cast<char>(0x80 | ((code >> 12) & 0x3F));
 		out[2] = static_cast<char>(0x80 | ((code >> 6) & 0x3F));
 		out[3] = static_cast<char>(0x80 | (code & 0x3F));
