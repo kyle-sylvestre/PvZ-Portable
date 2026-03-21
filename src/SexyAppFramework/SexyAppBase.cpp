@@ -1787,6 +1787,8 @@ int SexyAppBase::MsgBox(const std::string& theText, const std::string& theTitle,
 	ErrorApplicationConfig c;
 	errorApplicationCreate(&c, theTitle.c_str(), theText.c_str());
 	errorApplicationShow(&c);
+#else
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, theTitle.c_str(), theText.c_str(), (SDL_Window*)mWindow);
 #endif
 
 	EndPopup();
@@ -1810,6 +1812,8 @@ void SexyAppBase::Popup(const std::string& theString)
 	ErrorApplicationConfig c;
 	errorApplicationCreate(&c, "Fatal error", theString.c_str());
 	errorApplicationShow(&c);
+#else
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FATAL ERROR", theString.c_str(), (SDL_Window*)mWindow);
 #endif
 
 	EndPopup();
