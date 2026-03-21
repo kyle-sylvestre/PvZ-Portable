@@ -2889,7 +2889,7 @@ bool SexyAppBase::LoadProperties(const std::string& theFileName, bool required, 
 bool SexyAppBase::LoadProperties()
 {
 	// Load required language-file properties
-	return LoadProperties("properties/default.xml", true, false);
+	return LoadProperties("properties/default.xml", false, false);
 }
 
 void SexyAppBase::LoadResourceManifest()
