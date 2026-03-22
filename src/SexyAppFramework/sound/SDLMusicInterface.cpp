@@ -264,6 +264,7 @@ bool SDLMusicInterface::IsPlaying(int theSongId)
 void SDLMusicInterface::SetVolume(double theVolume)
 {
 	mGlobalVolume = (int)(theVolume*80);
+	Mix_VolumeMusicGeneral(mGlobalVolume);
 }
 
 void SDLMusicInterface::SetMusicAmplify(int theSongId, double theAmp)
