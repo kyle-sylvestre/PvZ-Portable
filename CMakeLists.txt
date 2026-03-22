@@ -31,7 +31,7 @@ if(MSVC)
 endif()
 
 file(GLOB SOURCES
-	src/*.cpp
+	src/CircleShoot/source/CircleShoot/*.cpp
 	src/SexyAppFramework/*.cpp
 	src/SexyAppFramework/graphics/*.cpp
 	src/SexyAppFramework/imagelib/*.cpp
@@ -40,10 +40,12 @@ file(GLOB SOURCES
 	src/SexyAppFramework/sound/*.cpp
 	src/SexyAppFramework/widget/*.cpp
 	src/SexyAppFramework/fcaseopen/*.c
-	src/Sexy.TodLib/*.cpp
-	src/Lawn/*.cpp
-	src/Lawn/Widget/*.cpp
-	src/Lawn/System/*.cpp
+	src/SexyAppFramework/ogg/*.c
+	#src/*.cpp
+	#src/Sexy.TodLib/*.cpp
+	#src/Lawn/*.cpp
+	#src/Lawn/Widget/*.cpp
+	#src/Lawn/System/*.cpp
 )
 
 # these files are included and must not be built in the project
@@ -198,6 +200,7 @@ target_include_directories(pvz-portable PRIVATE
 	${PLAT_INCLUDES}
 	${PROJECT_SOURCE_DIR}/src
 	${PROJECT_SOURCE_DIR}/src/SexyAppFramework
+	${PROJECT_SOURCE_DIR}/src/SexyAppFrameworkFlat
 	${PROJECT_SOURCE_DIR}/src/SexyAppFramework/sound/SDL-Mixer-X/include
 	${SDL2_INCLUDE_DIRS}
 )
@@ -206,6 +209,26 @@ target_compile_definitions(pvz-portable PRIVATE
 	$<$<BOOL:${LIMBO_PAGE}>:_PVZ_LIMBO_PAGE>
 	$<$<BOOL:${DO_FIX_BUGS}>:DO_FIX_BUGS>
 )
+
+# disable zuma debug commands
+target_compile_definitions(pvz-portable PRIVATE RELEASEFINAL)
+
+# use directory picker
+set_property(TARGET pvz-portable PROPERTY OUTPUT_NAME zuma-portable)
+if (APPLE AND NOT IOS)
+	set_property(SOURCE 
+		${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Main.cpp
+		APPEND_STRING PROPERTY COMPILE_FLAGS " -x objective-c++ "
+	)
+	target_link_libraries(pvz-portable PRIVATE
+		"-framework Foundation"
+		"-framework AppKit"
+	)
+    set_target_properties(pvz-portable PROPERTIES 
+        MACOSX_BUNDLE               TRUE
+	)
+endif()
+
 target_compile_features(pvz-portable PRIVATE cxx_std_20)
 
 if (LOW_MEMORY)

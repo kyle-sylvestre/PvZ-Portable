@@ -3260,7 +3260,7 @@ void SexyAppBase::Init()
 	}
 #elif !defined(__SWITCH__) && !defined(__3DS__)
 	{
-		char* aPrefPath = SDL_GetPrefPath("io.github.wszqkzqk", "PvZPortable"); // Avoid conflict with official Plants vs. Zombies
+		char* aPrefPath = SDL_GetPrefPath("", "ZumaPortable"); // Avoid conflict with official Zuma
 		if (aPrefPath)
 		{
 			SetAppDataFolder(aPrefPath);
