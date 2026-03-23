@@ -92,6 +92,15 @@ static bool gScreenSaverActive = false;
 
 static GLImage* gFPSImage = nullptr;
 
+struct DeferredMessageBox
+{
+    bool is_error;
+    std::string title;
+    std::string message;
+};
+static std::mutex gMessageBoxLock;
+static std::vector<DeferredMessageBox> gMessageBoxes;
+
 #ifdef __EMSCRIPTEN__
 static void EmscriptenDeferredDoExit(void* arg)
 {
@@ -104,6 +113,7 @@ static void EmscriptenDeferredDoExit(void* arg)
 SexyAppBase::SexyAppBase()
 {
 	gSexyAppBase = this;
+    mPrimaryThreadId = std::this_thread::get_id();
 
 	SDL_Init(SDL_INIT_TIMER);
 
@@ -338,7 +348,6 @@ SexyAppBase::SexyAppBase()
 	mWidgetManager = new WidgetManager(this);
 	mResourceManager = new ResourceManager(this);
 
-	mPrimaryThreadId = std::this_thread::get_id();
 
 	mTabletPC = false;
 }
@@ -1780,43 +1789,91 @@ int SexyAppBase::MsgBox(const std::string& theText, const std::string& theTitle,
 {
 	(void)theFlags;
 
-	BeginPopup();
-	printf("%s\n===\n%s\n", theTitle.c_str(), theText.c_str());
-
+    if (gSexyAppBase == NULL || std::this_thread::get_id() == gSexyAppBase->mPrimaryThreadId)
+    {
+        BeginPopup();
+        
+        printf("%s\n===\n%s\n", theTitle.c_str(), theText.c_str());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, theTitle.c_str(), theText.c_str(), (SDL_Window*)mWindow);
+        
 #ifdef __SWITCH__
-	ErrorApplicationConfig c;
-	errorApplicationCreate(&c, theTitle.c_str(), theText.c_str());
-	errorApplicationShow(&c);
-#else
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, theTitle.c_str(), theText.c_str(), (SDL_Window*)mWindow);
+        ErrorApplicationConfig c;
+        errorApplicationCreate(&c, theTitle.c_str(), theText.c_str());
+        errorApplicationShow(&c);
 #endif
-
-	EndPopup();
+        EndPopup();
+    }
+    else
+    {
+        // add new instance
+        {
+            std::scoped_lock anAutoCrit(gMessageBoxLock);
+            DeferredMessageBox mb = {};
+            mb.message = theText;
+            mb.title = theTitle;
+            mb.is_error = false;
+            gMessageBoxes.push_back(mb);
+        }
+        
+        // wait until called
+        for (;;)
+        {
+            {
+                std::scoped_lock anAutoCrit(gMessageBoxLock);
+                if (gMessageBoxes.size() == 0)
+                    break;
+            }
+            SDL_Delay(100);
+        }
+    }
 
 	return 0;
 }
 
 void SexyAppBase::Popup(const std::string& theString)
 {
-	if (IsScreenSaver())
-	{
-		LogScreenSaverError(theString);
-		return;
-	}
-
-	BeginPopup();
-	if (!mShutdown)
-		printf("FATAL ERROR\n===\n%s\n", theString.c_str());
-
+    if (gSexyAppBase == NULL || std::this_thread::get_id() == gSexyAppBase->mPrimaryThreadId)
+    {
+        if (IsScreenSaver())
+        {
+            LogScreenSaverError(theString);
+            return;
+        }
+        
+        BeginPopup();
+        if (!mShutdown)
+            printf("FATAL ERROR\n===\n%s\n", theString.c_str());
+        
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FATAL ERROR", theString.c_str(), (SDL_Window*)mWindow);
 #ifdef __SWITCH__
-	ErrorApplicationConfig c;
-	errorApplicationCreate(&c, "Fatal error", theString.c_str());
-	errorApplicationShow(&c);
-#else
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FATAL ERROR", theString.c_str(), (SDL_Window*)mWindow);
+        ErrorApplicationConfig c;
+        errorApplicationCreate(&c, "Fatal error", theString.c_str());
+        errorApplicationShow(&c);
 #endif
-
-	EndPopup();
+        EndPopup();
+    }
+    else
+    {
+        // add new instance
+        {
+            std::scoped_lock anAutoCrit(gMessageBoxLock);
+            DeferredMessageBox mb = {};
+            mb.message = theString;
+            mb.is_error = true;
+            gMessageBoxes.push_back(mb);
+        }
+        
+        // wait until called
+        for (;;)
+        {
+            {
+                std::scoped_lock anAutoCrit(gMessageBoxLock);
+                if (gMessageBoxes.size() == 0)
+                    break;
+            }
+            SDL_Delay(100);
+        }
+    }
 }
 
 
@@ -2710,6 +2767,24 @@ void SexyAppBase::DoMainLoop()
 
 bool SexyAppBase::UpdateAppStep(bool* updated)
 {
+    // handle deferred message box calls
+    {
+        std::scoped_lock anAutoCrit(gMessageBoxLock);
+        while (gMessageBoxes.size())
+        {
+            DeferredMessageBox &box = gMessageBoxes.front();
+            if (box.is_error)
+            {
+                Popup(box.message);
+            }
+            else
+            {
+                MsgBox(box.message, box.title, 0);
+            }
+            gMessageBoxes.pop_back();
+        }
+    }
+    
 	if (updated != nullptr)
 		*updated = false;
 
