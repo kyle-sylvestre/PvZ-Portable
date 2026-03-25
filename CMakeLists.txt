@@ -224,8 +224,13 @@ if (APPLE AND NOT IOS)
 		"-framework Foundation"
 		"-framework AppKit"
 	)
-    set_target_properties(pvz-portable PROPERTIES 
-        MACOSX_BUNDLE               TRUE
+	set_target_properties(pvz-portable PROPERTIES
+		MACOSX_BUNDLE TRUE
+		MACOSX_BUNDLE_GUI_IDENTIFIER "io.itch.ksylvestre.zuma-portable"
+		MACOSX_BUNDLE_BUNDLE_NAME "Zuma Portable"
+		MACOSX_BUNDLE_BUNDLE_VERSION "0.1"
+		MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1"
+		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/zuma/Info.plist.in"
 	)
 endif()
 
