@@ -429,9 +429,11 @@ bool FontData::HandleCommand(const ListDataElement& theParams)
 				{
 					for (uint32_t aMapIdx = 0; aMapIdx < aFromVector.size(); aMapIdx++)
 					{
-						if ((aFromVector[aMapIdx].length() == 1) && (aToVector[aMapIdx].length() == 1))
+						char32_t aFromChar = UTF8CharToUTF32Char(aFromVector[aMapIdx]);
+						char32_t aToChar = UTF8CharToUTF32Char(aToVector[aMapIdx]);
+						if (aFromChar != 0 && aToChar != 0)
 						{
-							mCharMap.insert(CharMap::value_type(aFromVector[aMapIdx][0], aToVector[aMapIdx][0]));
+							mCharMap.insert(CharMap::value_type(aFromChar, aToChar));
 						}
 						else
 							invalidParamFormat = true;
