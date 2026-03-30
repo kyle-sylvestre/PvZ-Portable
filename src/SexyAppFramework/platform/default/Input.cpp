@@ -333,8 +333,14 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 						break;
 
 					case SDL_WINDOWEVENT_FOCUS_GAINED:
+						mActive = true;
+						mMinimized = false;
+						RehupFocus();
+						mWidgetManager->MarkAllDirty();
+						break;
+
 					case SDL_WINDOWEVENT_FOCUS_LOST:
-						mActive = event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED;
+						mActive = false;
 						RehupFocus();
 						break;
 				}
