@@ -259,7 +259,7 @@ void Graphics::PFDelete(int i) // remove edge i from active list
 	if (j>=mPFNumActiveEdges) return;	/* edge not in active list; happens at aMinY*/
     
 	mPFNumActiveEdges--;
-    memcpy(&mPFActiveEdgeList[j], &mPFActiveEdgeList[j+1], (mPFNumActiveEdges-j)*sizeof mPFActiveEdgeList[0]);
+    memmove(&mPFActiveEdgeList[j], &mPFActiveEdgeList[j+1], (mPFNumActiveEdges-j)*sizeof mPFActiveEdgeList[0]);
 }
 
 void Graphics::PFInsert(int i, int y) // append edge i to end of active list
