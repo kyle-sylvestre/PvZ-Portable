@@ -53,21 +53,22 @@
 #include <mmsystem.h>
 #else
 #include <strings.h>
-#endif
-
-// fallback if NOMINMAX fails (somehow?)
-#undef min
-#undef max
-
 #define _S(x) x
-typedef std::string SexyString;
-typedef char SexyChar;
 typedef time_t __time64_t;
 typedef void *HWND, *HFONT;
 typedef unsigned int DWORD;
 #define _time64 time
 #define _localtime64 localtime
 #define stricmp strcasecmp
+#endif
+
+typedef std::string SexyString;
+typedef char SexyChar;
+
+// fallback if NOMINMAX fails (somehow?)
+#undef min
+#undef max
+
 
 // Define unreachable()
 #ifdef _MSC_VER

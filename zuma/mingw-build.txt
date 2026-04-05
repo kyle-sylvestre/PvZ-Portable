@@ -1,0 +1,7 @@
+export PREFIX=$PWD/mingw
+export CC=x86_64-w64-mingw32-gcc
+export CXX=x86_64-w64-mingw32-g++
+export AR=x86_64-w64-mingw32-ar
+./configure --host=x86_64-w64-mingw32 --prefix=$PWD/../mingw CC=x86_64-w64-mingw32-gcc
+./configure --prefix=$PWD/../mingw --cross-prefix=x86_64-w64-mingw32- // zlib configure
+cmake $PWD/SDL -B $PWD/SDL/build -DCMAKE_TOOLCHAIN_FILE=$PWD/../toolchain.cmake -DCMAKE_PREFIX_PATH=$PWD/mingw -DCMAKE_INSTALL_PREFIX=$PWD/mingw
