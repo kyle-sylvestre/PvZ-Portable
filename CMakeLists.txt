@@ -172,6 +172,7 @@ else()
 	set(SDL2_LINK_TARGET SDL2::SDL2)
 endif()
 
+set(USE_OGG_VORBIS_STB OFF)
 set(SDL_MIXER_X_STATIC ON CACHE BOOL "Build static library of SDL Mixer X")
 set(SDL_MIXER_X_SHARED OFF CACHE BOOL "Build shared library of SDL Mixer X")
 set(USE_MIDI OFF CACHE BOOL "SDL Mixer X midi")
