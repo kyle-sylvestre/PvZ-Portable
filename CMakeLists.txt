@@ -40,7 +40,7 @@ file(GLOB SOURCES
 	src/SexyAppFramework/sound/*.cpp
 	src/SexyAppFramework/widget/*.cpp
 	src/SexyAppFramework/fcaseopen/*.c
-	src/SexyAppFramework/ogg/*.c
+	#src/SexyAppFramework/ogg/*.c
 	#src/*.cpp
 	#src/Sexy.TodLib/*.cpp
 	#src/Lawn/*.cpp

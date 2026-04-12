@@ -26,11 +26,9 @@
 #include "SDLSoundInstance.h"
 #include "paklib/PakInterface.h"
 
-#include "ogg/ivorbiscodec.h"
-#include "ogg/ivorbisfile.h"
-
 using namespace Sexy;
 
+#if 0
 int ov_pak_open(PFILE *f,OggVorbis_File *vf,char *initial,long ibytes){
     const auto ov_seek_impl = [](void *file,ogg_int64_t off,int whence) -> int
     {
@@ -60,7 +58,6 @@ int ov_pak_open(PFILE *f,OggVorbis_File *vf,char *initial,long ibytes){
     return ov_open_callbacks((void *)f, vf, initial, ibytes, callbacks);
 }
 
-#if 1
 Mix_Chunk *TREMOR_LoadOGG(const std::string& theFilename)
 {
     OggVorbis_File vf = {};
@@ -378,10 +375,7 @@ bool SDLSoundManager::LoadSound(intptr_t theSfxID, const std::string& theFilenam
 		p_fread(data, 1, fileSize, fp);
 		p_fclose(fp);
 
-        if (0 == strcmp(formats[i], ".ogg"))
-            mSourceSounds[theSfxID] = TREMOR_LoadOGG(aFilename);
-        else
-            mSourceSounds[theSfxID] = Mix_LoadWAV_RW(SDL_RWFromConstMem(data, fileSize), 1);
+		mSourceSounds[theSfxID] = Mix_LoadWAV_RW(SDL_RWFromConstMem(data, fileSize), 1);
 		delete[] data;
 
 		if (mSourceSounds[theSfxID]) break;
