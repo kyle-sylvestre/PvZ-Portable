@@ -289,13 +289,13 @@ if (WIN32)
 		target_compile_options(pvz-portable PRIVATE /utf-8)
 	endif()
 
-	target_sources(pvz-portable PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/LawnProject.rc)
+	target_sources(pvz-portable PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Zuma.rc)
 
 	set_source_files_properties(
-		${CMAKE_CURRENT_SOURCE_DIR}/src/SexyAppFramework/LawnProject.rc
+		${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Zuma.rc
 		PROPERTIES
-			COMPILE_DEFINITIONS "APP_ICON_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/icon.ico\""
-			OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/icon.ico"
+			COMPILE_DEFINITIONS "APP_ICON_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Zuma.ico\""
+			OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Zuma.ico"
 	)
 
 	target_link_libraries(pvz-portable PRIVATE ws2_32 user32 gdi32 winmm imm32 shlwapi)
