@@ -54,7 +54,6 @@ jobs:
         New-Item -ItemType Directory -Force -Path dist | Out-Null
         New-Item -ItemType Directory -Force -Path dist/zuma-portable | Out-Null
         Copy-Item build/zuma-portable.exe dist/zuma-portable
-        Copy-Item build/zuma-portable.pdb dist/zuma-portable
         Copy-Item zuma/LICENSE.txt dist/zuma-portable
 
     - name: Upload Artifact
