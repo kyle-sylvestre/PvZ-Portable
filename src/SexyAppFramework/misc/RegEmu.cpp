@@ -32,6 +32,10 @@
 #include <cstring>
 #include <fstream>
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 #define REGEMU_VERSION 1
 
 struct RegValue
@@ -160,6 +164,30 @@ bool regemu::RegistryRead(const std::string& keyName, const std::string& valueNa
 	if (!registry.count(keyName))
 	{
 		printf("RegEmu: Key '%s' does not exist\n", keyName.c_str());
+        
+#if defined(_WIN32)
+		// fallback to real registry
+        HKEY aGameKey = {};
+        if (RegOpenKeyExA(HKEY_CURRENT_USER, keyName.c_str(), 0, KEY_READ, &aGameKey) == ERROR_SUCCESS)
+        {
+            DWORD aType = (*type == REGEMU_NONE) ? REG_NONE : 
+            			  (*type == REGEMU_SZ) ? REG_SZ : 
+            			  (*type == REGEMU_EXPAND_SZ) ? REG_EXPAND_SZ : 
+            			  (*type == REGEMU_BINARY) ? REG_BINARY : 
+            			  (*type == REGEMU_DWORD) ? REG_DWORD : 
+            			  (*type == REGEMU_DWORD_LITTLE_ENDIAN) ? REG_DWORD_LITTLE_ENDIAN : 
+            			  (*type == REGEMU_DWORD_BIG_ENDIAN) ? REG_DWORD_BIG_ENDIAN : 
+            			  (*type == REGEMU_MULTI_SZ) ? REG_MULTI_SZ : 
+            			  (*type == REGEMU_QWORD) ? REG_QWORD : REG_NONE;
+            if (RegQueryValueExA(aGameKey, valueName.c_str(), 0, &aType, (LPBYTE)value, (LPDWORD)length) == ERROR_SUCCESS)
+            {
+                RegCloseKey(aGameKey);
+                return true;
+            }
+            RegCloseKey(aGameKey);
+        }
+#endif
+        
 		return false;
 	}
 	if (!registry[keyName].count(valueName))
