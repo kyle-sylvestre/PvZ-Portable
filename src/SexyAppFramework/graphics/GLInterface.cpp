@@ -1075,11 +1075,14 @@ GLInterface::GLInterface(SexyAppBase* theApp)
 
 GLInterface::~GLInterface()
 {
-	Flush();
-	for (auto *img : mImageSet)
+	if (gProgram)
 	{
-		delete (TextureData*)img->mRenderData;
-		img->mRenderData = nullptr;
+		Flush();
+		for (auto *img : mImageSet)
+		{
+			delete (TextureData*)img->mRenderData;
+			img->mRenderData = nullptr;
+		}
 	}
 }
 
@@ -1152,6 +1155,21 @@ int GLInterface::Init(bool IsWindowed)
 	{
 		inited = true;
 		PlatformGLInit();
+
+		if (GLAD_GL_ES_VERSION_2_0 == 0)
+		{
+            std::string message = "Failed to initialize OpenGL 2.0";
+            if (glad_glGetString)
+            {
+                const char *version = (const char*)glad_glGetString(GL_VERSION);
+                if (version)
+                {
+                    message += Sexy::StrFormat("\nVersion found: %s", version);
+                }
+            }
+            gSexyAppBase->Popup(message);
+            return 0;
+		}
 
 		gProgram = shaderLoad(SHADER_CODE);
 		if (gProgram == 0)
