@@ -2,10 +2,20 @@ name: CI build
 
 on:
   workflow_dispatch:
+    inputs:
+      build_windows_debug:
+        description: "Build Windows Debug"
+        type: boolean
+        default: false
+      build_windows_release:
+        description: "Build Windows Release"
+        type: boolean
+        default: true
 
 jobs:
-  build-windows-msvc-x86:
-    name: Build for Windows (MSVC x86)
+  build-windows-msvc-x86-release:
+    if: inputs.build_windows_release
+    name: Build for Windows (Release MSVC x86)
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v6
@@ -44,12 +54,62 @@ jobs:
         New-Item -ItemType Directory -Force -Path dist | Out-Null
         New-Item -ItemType Directory -Force -Path dist/zuma-portable | Out-Null
         Copy-Item build/zuma-portable.exe dist/zuma-portable
+        Copy-Item build/zuma-portable.pdb dist/zuma-portable
         Copy-Item zuma/LICENSE.txt dist/zuma-portable
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
       with:
-        name: zuma-portable-windows-msvc-x86
+        name: zuma-portable-windows-msvc-x86-release
         path: dist/
 
 
+  build-windows-msvc-x86-debug:
+    if: inputs.build_windows_debug
+    name: Build for Windows (Debug MSVC x86)
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        ref: zuma
+
+    - uses: actions/checkout@v6
+      with:
+        repository: kyle-sylvestre/CircleShootApp
+        path: src/CircleShoot
+
+    - name: Create flat SexyAppFramework
+      shell: bash
+      run: |
+        bash scripts/create_flat_directory.sh
+
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x86
+
+    - name: Install Ninja
+      run: choco install ninja -y
+
+    - name: Setup vcpkg (manifest mode)
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: vcpkg.json
+
+    - name: Compile Zuma-Portable for Windows (MSVC)
+      shell: pwsh
+      run: |
+        cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE=Debug -DCONSOLE=OFF -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x86-windows-static
+        cmake --build build
+
+        New-Item -ItemType Directory -Force -Path dist | Out-Null
+        New-Item -ItemType Directory -Force -Path dist/zuma-portable | Out-Null
+        Copy-Item build/zuma-portable.exe dist/zuma-portable
+        Copy-Item build/zuma-portable.pdb dist/zuma-portable
+        Copy-Item zuma/LICENSE.txt dist/zuma-portable
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: zuma-portable-windows-msvc-x86-debug
+        path: dist/
