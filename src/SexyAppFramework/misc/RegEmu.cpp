@@ -166,9 +166,19 @@ bool regemu::RegistryRead(const std::string& keyName, const std::string& valueNa
 		printf("RegEmu: Key '%s' does not exist\n", keyName.c_str());
         
 #if defined(_WIN32)
+        
 		// fallback to real registry
+        std::string keyNameWin32 = keyName;
+        for (char &c : keyNameWin32)
+        {
+            if (c == '/')
+            {
+                c = '\\';
+            }
+        }
+        
         HKEY aGameKey = {};
-        if (RegOpenKeyExA(HKEY_CURRENT_USER, keyName.c_str(), 0, KEY_READ, &aGameKey) == ERROR_SUCCESS)
+        if (RegOpenKeyExA(HKEY_CURRENT_USER, keyNameWin32.c_str(), 0, KEY_READ, &aGameKey) == ERROR_SUCCESS)
         {
             DWORD aType = (*type == REGEMU_NONE) ? REG_NONE : 
             			  (*type == REGEMU_SZ) ? REG_SZ : 
