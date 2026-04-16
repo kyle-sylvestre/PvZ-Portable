@@ -163,6 +163,7 @@ bool regemu::RegistryRead(const std::string& keyName, const std::string& valueNa
 {
 	if (!registry.count(keyName))
 	{
+        bool aResult = false;
 		printf("RegEmu: Key '%s' does not exist\n", keyName.c_str());
         
 #if defined(_WIN32)
@@ -177,21 +178,37 @@ bool regemu::RegistryRead(const std::string& keyName, const std::string& valueNa
             }
         }
         
+        DWORD err = 0;
         HKEY aGameKey = {};
-        if (RegOpenKeyExA(HKEY_CURRENT_USER, keyNameWin32.c_str(), 0, KEY_READ, &aGameKey) == ERROR_SUCCESS)
+        std::string output = Sexy::StrFormat("RegistryRead %s %s", keyNameWin32.c_str(), valueName.c_str());
+        if (ERROR_SUCCESS == (err = RegOpenKeyExA(HKEY_CURRENT_USER, keyNameWin32.c_str(), 0, KEY_READ, &aGameKey)))
         {
             DWORD aType = 0;
-            if (RegQueryValueExA(aGameKey, valueName.c_str(), 0, &aType, (LPBYTE)value, (LPDWORD)length) == ERROR_SUCCESS)
+            if (ERROR_SUCCESS == (err = RegQueryValueExA(aGameKey, valueName.c_str(), 0, &aType, (LPBYTE)value, (LPDWORD)length)))
             {
+                std::string aString;
+                if (aType == REG_DWORD)
+                    aString = Sexy::StrFormat("%u", (unsigned)*value);
+                else if (aType == REG_SZ)
+                    aString = (char*)value;
+                
+                output += Sexy::StrFormat(" Success %s", aString.c_str());
                 *type = aType;
-                RegCloseKey(aGameKey);
-                return true;
+                aResult = true;
+            }
+            else
+            {
+                output += Sexy::StrFormat(" Fail RegQueryValueExA %u", err);
             }
             RegCloseKey(aGameKey);
         }
+        else
+        {
+            output += Sexy::StrFormat(" Fail RegOpenKeyExA %u", err);
+        }
+        printf("%s\n", output.c_str());
 #endif
-        
-		return false;
+        return aResult;
 	}
 	if (!registry[keyName].count(valueName))
 	{
