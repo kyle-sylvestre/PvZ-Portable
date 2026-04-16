@@ -76,6 +76,7 @@
 #include "sound/DummyMusicInterface.h"
 #include "misc/memmgr.h"
 #include "misc/RegEmu.h"
+#include "misc/XMLParser.h"
 
 using namespace Sexy;
 
@@ -3359,6 +3360,39 @@ void SexyAppBase::Init()
 	{
 		SetAppDataFolder(GetResourcePath("savedata"));
 	}
+    
+    // load partner data
+    {
+        XMLParser aXMLParser;
+        std::string aFilename = Sexy::GetResourcePath("properties/partner.xml");
+        if (aXMLParser.OpenFile(aFilename))
+        {
+            XMLElement aXMLElement;
+            while (!aXMLParser.HasFailed())
+            {
+                if (!aXMLParser.NextElement(&aXMLElement))
+                    break;
+                
+                if (aXMLElement.mSection == "Properties")
+                {
+                    //std::string value = PopValue();
+                    auto pair = aXMLElement.mAttributes.find("id");
+                    if (pair != aXMLElement.mAttributes.end())
+                    {
+                        std::string name = pair->second;
+                        if (aXMLParser.NextElement(&aXMLElement))
+                        {
+                            std::string value = aXMLElement.mValue;
+                            if (name == "RegistryKey")
+                                SetString("RegistryKey", value);
+                            else if (name == "DefaultWindowed")
+                                mIsWindowed = (value == "true");
+                        };
+                    }
+                }
+            }
+        }
+    }
 
 	ReadFromRegistry();	
 
