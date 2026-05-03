@@ -58,7 +58,10 @@ bool SDLMusicInterface::LoadMusic(int theSongId, const std::string& theFileName)
 	aHMusic = Mix_LoadMUS(theFileName.c_str());
 
 	if (aHMusic==0)
-		return false;
+    {
+        SDL_Log("Mix_LoadMUS(%s): %s", theFileName.c_str(), Mix_GetError());
+        return false;
+    }
 	
 	SDLMusicInfo aMusicInfo;	
 	aMusicInfo.mHMusic = aHMusic;
