@@ -556,7 +556,6 @@ void EditWidget::ProcessKey(KeyCode theKey, char theChar)
 
 void EditWidget::KeyDown(KeyCode theKey)
 {
-    SDL_Log("EditWidget::KeyDown", (int)theKey);
 	if (((theKey < 'A') || (theKey >= 'Z')))
 		ProcessKey(theKey, 0);
 
@@ -565,7 +564,6 @@ void EditWidget::KeyDown(KeyCode theKey)
 
 void EditWidget::KeyChar(char theChar)
 {
-    SDL_Log("EditWidget::KeyChar", (int)theChar);
 //	if (mEditListener->AllowChar(mId, theChar))
 		ProcessKey(KEYCODE_UNKNOWN, theChar);
 
