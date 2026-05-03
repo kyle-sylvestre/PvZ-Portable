@@ -65,7 +65,7 @@ char *strsep(char **stringp, const char *delim)
 
 #if !defined(_WIN32)
 // r must have strlen(path) + 3 bytes
-static int casepath(char const *path, char *r)
+int casepath(char const *path, char *r)
 {
     size_t l = strlen(path);
     char *p = (char *)alloca(l + 1);
@@ -137,7 +137,7 @@ static int casepath(char const *path, char *r)
 }
 
 // r must have strlen(base) + strlen(path) + 3 bytes
-static int casepathat(char const *base, char const *path, char *r)
+int casepathat(char const *base, char const *path, char *r)
 {
     if (!base || base[0] == '\0')
         base = ".";
