@@ -62,6 +62,7 @@ typedef unsigned int DWORD;
 #define stricmp strcasecmp
 #endif
 
+#include <SDL2/SDL.h>
 typedef std::string SexyString;
 typedef char SexyChar;
 

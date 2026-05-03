@@ -759,6 +759,7 @@ void WidgetManager::MouseWheel(int theDelta)
 
 bool WidgetManager::KeyChar(char theChar)
 {
+    SDL_Log("WidgetManager::KeyChar", (int)theChar);
 	mLastInputUpdateCnt = mUpdateCnt;
 
 	if (theChar == KEYCODE_TAB)
@@ -782,6 +783,7 @@ bool WidgetManager::KeyChar(char theChar)
 
 bool WidgetManager::KeyDown(KeyCode key)
 {
+    SDL_Log("WidgetManager::KeyDown", (int)key);
 	mLastInputUpdateCnt = mUpdateCnt;
 
 	if ((key >= 0) && (key < 0xFF))
