@@ -16,7 +16,7 @@
         android:supportsRtl="true">
 
         <activity
-            android:name=".PvZPortableActivity"
+            android:name=".ZumaPortableActivity"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
             android:exported="true"

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PvZ Portable</string>
+    <string name="app_name">Zuma Portable</string>
 
     <!-- ResourceImportActivity -->
     <string name="status_ready">Game resources found. Ready to play!</string>
-    <string name="status_missing">Game resources not found.\nPlease import main.pak + properties/ to continue.</string>
+    <string name="status_missing">Game resources not found.\nPlease import game to continue.</string>
 
     <string name="section_import_resources">Import Game Resources</string>
-    <string name="import_help">Select a ZIP file or a folder that contains legally purchased copy of main.pak and the properties/ directory.</string>
+    <string name="import_help">Select a ZIP file or a folder that contains legally purchased copy of Zuma Deluxe.</string>
     <string name="btn_pick_zip">Select ZIP File</string>
     <string name="btn_pick_dir">Select Resource Folder</string>
 

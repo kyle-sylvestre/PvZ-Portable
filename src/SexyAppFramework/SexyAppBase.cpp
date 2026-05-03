@@ -390,6 +390,9 @@ SexyAppBase::~SexyAppBase()
 	gSexyAppBase = nullptr;
 
 	WriteDemoBuffer();
+    
+    SDL_DestroyWindow((SDL_Window*)mWindow); mWindow = nullptr;
+    SDL_Quit();
 }
 
 void SexyAppBase::ClearUpdateBacklog(bool relaxForASecond)

@@ -15,12 +15,12 @@ configurations.all {
 def prebuilt = project.hasProperty('usePrebuiltLibs') && project.usePrebuiltLibs.toBoolean()
 
 android {
-    namespace 'io.github.wszqkzqk.pvzportable'
+    namespace 'io.itch.ksylvestre.zumaportable'
     compileSdk 36
 
     defaultConfig {
-        applicationId "io.github.wszqkzqk.pvzportable"
-        minSdk 28
+        applicationId "io.itch.ksylvestre.zumaportable"
+        minSdk 24
         targetSdk 36
         versionCode 1
         versionName "0.1"

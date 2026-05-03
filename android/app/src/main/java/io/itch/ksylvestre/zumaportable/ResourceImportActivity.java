@@ -19,7 +19,7 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.wszqkzqk.pvzportable;
+package io.itch.ksylvestre.zumaportable;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -112,7 +112,7 @@ public class ResourceImportActivity extends AppCompatActivity {
             dirPicker.launch(null)
         );
         btnExportSave.setOnClickListener(v ->
-            saveExporter.launch("pvz-portable-savedata.zip")
+            saveExporter.launch("zuma-portable-savedata.zip")
         );
         btnImportSaveZip.setOnClickListener(v ->
             saveZipImporter.launch(new String[]{"application/zip", "application/x-zip-compressed"})
@@ -127,9 +127,8 @@ public class ResourceImportActivity extends AppCompatActivity {
 
     private boolean hasResources() {
         if (gameDir == null) return false;
-        File pak = new File(gameDir, "main.pak");
         File props = new File(gameDir, "properties");
-        return pak.exists() && props.isDirectory();
+        return props.isDirectory();
     }
 
     private boolean hasSaveData() {
@@ -152,7 +151,7 @@ public class ResourceImportActivity extends AppCompatActivity {
     }
 
     private void launchGame() {
-        Intent intent = new Intent(this, PvZPortableActivity.class);
+        Intent intent = new Intent(this, ZumaPortableActivity.class);
         startActivity(intent);
         finish();
     }
@@ -231,12 +230,12 @@ public class ResourceImportActivity extends AppCompatActivity {
                 DocumentFile root = DocumentFile.fromTreeUri(this, treeUri);
                 if (root == null) throw new IOException("Cannot open directory");
 
-                // If main.pak isn't here, check one level of subdirectories
+                // If properties isn't here, check one level of subdirectories
                 DocumentFile sourceDir = root;
-                if (root.findFile("main.pak") == null) {
+                if (root.findFile("properties") == null) {
                     for (DocumentFile child : root.listFiles()) {
                         if (child.isDirectory()) {
-                            DocumentFile nested = child.findFile("main.pak");
+                            DocumentFile nested = child.findFile("properties");
                             if (nested != null) {
                                 sourceDir = child;
                                 break;

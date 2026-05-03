@@ -19,7 +19,7 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.github.wszqkzqk.pvzportable;
+package io.itch.ksylvestre.zumaportable;
 
 import android.content.Intent;
 import android.os.Build;
@@ -35,8 +35,8 @@ import org.libsdl.app.SDLActivity;
 
 import java.io.File;
 
-public class PvZPortableActivity extends SDLActivity {
-    private static final String TAG = "PvZPortable";
+public class ZumaPortableActivity extends SDLActivity {
+    private static final String TAG = "ZumaPortable";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +53,7 @@ public class PvZPortableActivity extends SDLActivity {
 
         super.onCreate(savedInstanceState);
         hideSystemUI();
+		nativeSetWorkingDir(extDir.getAbsolutePath());
     }
 
     @Override
@@ -100,8 +101,8 @@ public class PvZPortableActivity extends SDLActivity {
 
     private static boolean hasGameResources(File dir) {
         if (dir == null || !dir.isDirectory()) return false;
-        File pak = new File(dir, "main.pak");
         File props = new File(dir, "properties");
-        return pak.exists() && props.isDirectory();
+        return props.isDirectory();
     }
+	public native void nativeSetWorkingDir(String path);
 }

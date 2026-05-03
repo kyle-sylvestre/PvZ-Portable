@@ -11,6 +11,13 @@ on:
         description: "Build Windows Release"
         type: boolean
         default: true
+      build_android_release:
+        description: "Build Android Release"
+        type: boolean
+        default: false
+
+env:
+  VCPKG_BINARY_SOURCES: clear
 
 jobs:
   build-windows-msvc-x86-release:
@@ -112,3 +119,142 @@ jobs:
       with:
         name: zuma-portable-windows-msvc-x86-debug
         path: dist/
+  build-android:
+    if: inputs.build_android_release
+    name: Build for Android (arm64-v8a)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        ref: zuma
+
+    - uses: actions/checkout@v6
+      with:
+        repository: kyle-sylvestre/CircleShootApp
+        path: src/CircleShoot
+
+    - name: Create flat SexyAppFramework
+      shell: bash
+      run: |
+        bash scripts/create_flat_directory.sh
+
+    - name: Set up JDK
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install Android NDK
+      run: |
+        # Use the latest NDK available on the runner
+        if [ -n "$ANDROID_NDK_LATEST_HOME" ] && [ -d "$ANDROID_NDK_LATEST_HOME" ]; then
+          echo "ANDROID_NDK=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+          echo "Using pre-installed NDK: $ANDROID_NDK_LATEST_HOME"
+        else
+          # Fallback: install via sdkmanager
+          yes | sdkmanager --install "ndk;$(sdkmanager --list 2>/dev/null | grep -oP 'ndk;\K[\d.]+' | sort -V | tail -1)" || true
+          NDK_DIR=$(ls -d "$ANDROID_HOME"/ndk/*/ 2>/dev/null | sort -V | tail -1)
+          echo "ANDROID_NDK=${NDK_DIR%/}" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=${NDK_DIR%/}" >> "$GITHUB_ENV"
+        fi
+
+    - name: Download SDL2 Source
+      run: |
+        SDL2_TAG=$(git ls-remote --tags https://github.com/libsdl-org/SDL.git 'refs/tags/release-2.*' \
+          | sed 's|.*refs/tags/release-||' | sort -V | tail -1)
+        if [ -z "$SDL2_TAG" ]; then
+          SDL2_TAG="2.32.10" # Fallback to a known stable version if tag retrieval fails
+        fi
+        echo "Using SDL2 version: $SDL2_TAG"
+        wget -q "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_TAG}/SDL2-${SDL2_TAG}.tar.gz"
+        tar xf "SDL2-${SDL2_TAG}.tar.gz"
+        mv "SDL2-${SDL2_TAG}" sdl2-src
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: vcpkg.json
+
+    - name: Build SDL2 Shared Library
+      run: |
+        # On Android, SDL2 MUST be a shared library because the Java-side
+        # SDLActivity loads it via System.loadLibrary("SDL2").
+        cmake -B build-sdl2 \
+          -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+          -DANDROID_ABI=arm64-v8a \
+          -DANDROID_PLATFORM=android-24 \
+          -DSDL_SHARED=ON \
+          -DSDL_STATIC=OFF \
+          -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/sdl2-android \
+          -DCMAKE_BUILD_TYPE=Release \
+          sdl2-src
+        cmake --build build-sdl2 -j$(nproc)
+        cmake --install build-sdl2
+
+    - name: Build Native Library with CMake
+      run: |
+        ABI=arm64-v8a
+        ANDROID_API=24
+        BUILD_DIR=build-android-$ABI
+        SDL2_PREFIX=$GITHUB_WORKSPACE/sdl2-android
+
+        cmake -B $BUILD_DIR \
+          -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+          -DVCPKG_TARGET_TRIPLET=arm64-android \
+          -DVCPKG_CMAKE_SYSTEM_VERSION=$ANDROID_API \
+          -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+          -DANDROID_ABI=$ABI \
+          -DANDROID_PLATFORM=android-$ANDROID_API \
+          -DSDL2_DIR=$SDL2_PREFIX/lib/cmake/SDL2 \
+          -DCMAKE_BUILD_TYPE=Release
+
+        cmake --build $BUILD_DIR -j$(nproc)
+
+        # Collect all shared libraries into jniLibs for Gradle to package
+        JNILIBS=android/app/src/main/jniLibs/$ABI
+        mkdir -p $JNILIBS
+        cp -L $BUILD_DIR/libmain.so $JNILIBS/
+
+        # Copy SDL2 shared library
+        cp -L $SDL2_PREFIX/lib/libSDL2*.so $JNILIBS/
+
+        # Copy any .so dependencies from vcpkg (manifest mode installs into build dir)
+        VCPKG_LIB=$BUILD_DIR/vcpkg_installed/arm64-android/lib
+        for so in "$VCPKG_LIB"/*.so; do
+          [ -f "$so" ] && cp -L "$so" $JNILIBS/
+        done
+
+        # Strip debug symbols to reduce APK size
+        STRIP=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip
+        for so in "$JNILIBS"/*.so; do
+          "$STRIP" --strip-unneeded "$so"
+        done
+
+        echo "Collected .so files:"
+        ls -lh $JNILIBS/
+
+    - name: Build APK with Gradle
+      run: |
+        cd android
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+        # Use gradle wrapper; package pre-built native libraries into a release APK (debug-signed)
+        gradle wrapper
+        ./gradlew assembleRelease -PusePrebuiltLibs=true --no-daemon
+
+    - name: Copy APK
+      run: |
+        mkdir -p dist
+        find android -name "*.apk" -path "*/release/*" -exec cp {} dist/zuma-portable-android-arm64-v8a.apk \;
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: zuma-portable-android
+        path: dist/
+
