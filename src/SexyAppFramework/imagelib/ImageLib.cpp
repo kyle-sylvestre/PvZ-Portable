@@ -1464,14 +1464,11 @@ Image* ImageLib::GetImage(const std::string& theFilename, bool lookForAlphaImage
 		const std::string alphaPath1 = theFilename.substr(0, slashEnd) + "_" +
 			theFilename.substr(slashEnd);
 
-		if (FastFileExists(alphaPath1))
-			anAlphaImage = GetImage(alphaPath1, false);
-
+        anAlphaImage = GetImage(alphaPath1, false);
 		if (!anAlphaImage)
 		{
 			const std::string alphaPath2 = theFilename + "_";
-			if (FastFileExists(alphaPath2))
-				anAlphaImage = GetImage(alphaPath2, false);
+            anAlphaImage = GetImage(alphaPath2, false);
 		}
 	}
 
