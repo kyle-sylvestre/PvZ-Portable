@@ -185,7 +185,7 @@ jobs:
           cmake -B $BUILD_DIR \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=$ABI \
-            -DANDROID_PLATFORM=android-24 \
+            -DANDROID_PLATFORM=android-21 \
             -DSDL_SHARED=ON \
             -DSDL_STATIC=OFF \
             -DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
@@ -199,7 +199,7 @@ jobs:
     - name: Build Native Library with CMake
       run: |
         for ABI in arm64-v8a armeabi-v7a; do
-          ANDROID_API=24
+          ANDROID_API=21
           BUILD_DIR=build-android-$ABI
           SDL2_PREFIX=$GITHUB_WORKSPACE/sdl2-android
 
