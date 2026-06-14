@@ -46,7 +46,7 @@ android {
         release {
             minifyEnabled false
             // Use debug signing so the APK is directly installable without a release keystore
-            signingConfig signingConfigs.debug
+            //signingConfig signingConfigs.debug
         }
     }
 
