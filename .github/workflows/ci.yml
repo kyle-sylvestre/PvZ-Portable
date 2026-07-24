@@ -47,6 +47,13 @@ jobs:
     - name: Install Ninja
       run: choco install ninja -y
 
+      # Use old cmake for building YASM
+      # build error: Compatibility with CMake < 3.5 has been removed from CMake.
+    - name: Setup CMake 3.31.9
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.31.9'
+
     - name: Setup vcpkg (manifest mode)
       uses: lukka/run-vcpkg@v11
       with:
@@ -96,6 +103,13 @@ jobs:
 
     - name: Install Ninja
       run: choco install ninja -y
+
+      # Use old cmake for building YASM
+      # build error: Compatibility with CMake < 3.5 has been removed from CMake.
+    - name: Setup CMake 3.31.9
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.31.9'
 
     - name: Setup vcpkg (manifest mode)
       uses: lukka/run-vcpkg@v11
