@@ -856,16 +856,8 @@ std::string SexyAppBase::GetProductVersion(const std::string& thePath)
 
 void SexyAppBase::WaitForLoadingThread()
 {
-#ifdef __EMSCRIPTEN__
-	return;
-#endif
-	int ms = 20;
-
-	timespec ts;
-	ts.tv_sec = ms / 1000;
-	ts.tv_nsec = (ms % 1000) * 1000000;
-	while ((mLoadingThreadStarted) && (!mLoadingThreadCompleted))
-		nanosleep(&ts, &ts);
+    if (mLoadingThread.joinable())
+        mLoadingThread.join();
 }
 
 void SexyAppBase::SetCursorImage(int theCursorNum, Image* theImage)
@@ -2268,8 +2260,8 @@ void SexyAppBase::StartLoadingThread()
 #ifdef __EMSCRIPTEN__
 		LoadingThreadProcStub(this);
 #else
-		//_beginthread(LoadingThreadProcStub, 0, this);
-		std::thread(LoadingThreadProcStub, this).detach();
+        //_beginthread(LoadingThreadProcStub, 0, this);
+        mLoadingThread = std::thread(LoadingThreadProcStub, this); // keep joinable: detach() throws on devkitA64/libnx
 #endif
 	}
 }

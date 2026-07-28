@@ -10,9 +10,13 @@ on:
       build_windows_release:
         description: "Build Windows Release"
         type: boolean
-        default: true
+        default: false
       build_android_release:
         description: "Build Android Release"
+        type: boolean
+        default: false
+      build_switch_release:
+        description: "Build Nintendo Switch Release"
         type: boolean
         default: false
 
@@ -20,6 +24,55 @@ env:
   VCPKG_BINARY_SOURCES: clear
 
 jobs:
+  build-switch:
+    if: inputs.build_switch_release
+    name: Build for Nintendo Switch
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: zuma-switch
+
+      - uses: actions/checkout@v6
+        with:
+          repository: kyle-sylvestre/CircleShootApp
+          path: src/CircleShoot
+          ref: switch
+
+      - name: Create flat SexyAppFramework
+        shell: bash
+        run: |
+          bash scripts/create_flat_directory.sh
+
+      - name: Compile libopenmpt for Switch
+        shell: bash
+        run: |
+          source $DEVKITPRO/switchvars.sh
+          git clone https://github.com/OpenMPT/openmpt
+          cd openmpt
+          make CONFIG=gcc SHARED_LIB=0 DYNLINK=0 EXAMPLES=0 OPENMPT123=0 TEST=0 PREFIX=$PORTLIBS_PREFIX install 
+
+      - name: Compile Zuma-Portable for Switch
+        shell: bash
+        run: |
+          source $DEVKITPRO/switchvars.sh
+          mkdir build
+          cd build
+          aarch64-none-elf-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-O2
+          make
+          aarch64-none-elf-strip zuma-portable.elf
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: zuma-portable-switch
+          path: |
+            ./build/zuma-portable.nro
+            ./build/zuma-portable.elf
+
   build-windows-msvc-x86-release:
     if: inputs.build_windows_release
     name: Build for Windows (Release MSVC x86)

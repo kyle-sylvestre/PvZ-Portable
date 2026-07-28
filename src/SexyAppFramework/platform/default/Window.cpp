@@ -36,6 +36,14 @@
 
 using namespace Sexy;
 
+void SwitchError(const char *function)
+{
+#if defined(__SWITCH__)
+    std::string message = Sexy::StrFormat("%s:%s", function, SDL_GetError());
+    Popup(message);
+#endif
+}
+
 void SexyAppBase::MakeWindow()
 {
 	if (mWindow)
@@ -51,7 +59,8 @@ void SexyAppBase::MakeWindow()
 		SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 #endif
 
-		SDL_Init(SDL_INIT_VIDEO);
+        if (0 != SDL_Init(SDL_INIT_VIDEO))
+            SwitchError("SDL_Init");
 
 		Uint32 winFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 			| (!mIsWindowed ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
@@ -65,6 +74,9 @@ void SexyAppBase::MakeWindow()
 			mTitle.c_str(),
 			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 			mWidth * IMG_DOWNSCALE, mHeight * IMG_DOWNSCALE, winFlags);
+        
+        if (mWindow == NULL)
+            SwitchError("SDL_CreateWindow");
 
 		if (mWindow)
 			mContext = (void*)SDL_GL_CreateContext((SDL_Window*)mWindow);
@@ -87,6 +99,7 @@ void SexyAppBase::MakeWindow()
 		// Fallback: desktop GL 2.1 compatibility (macOS, old Windows drivers, etc.)
 		if (!mContext)
 		{
+            SwitchError("SDL_GL_CreateContext");
 			if (mWindow) { SDL_DestroyWindow((SDL_Window*)mWindow); mWindow = nullptr; }
 
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
@@ -97,12 +110,16 @@ void SexyAppBase::MakeWindow()
 				mTitle.c_str(),
 				SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 				mWidth * IMG_DOWNSCALE, mHeight * IMG_DOWNSCALE, winFlags);
+            
+            if (mWindow == NULL)
+                SwitchError("SDL_CreateWindow");
 
 			if (mWindow)
 				mContext = (void*)SDL_GL_CreateContext((SDL_Window*)mWindow);
 
 			if (!mContext)
 			{
+                SwitchError("SDL_GL_CreateContext");
 				if (mWindow) { SDL_DestroyWindow((SDL_Window*)mWindow); mWindow = nullptr; }
 				fprintf(stderr, "Failed to create any OpenGL context. "
 					"Please check your graphics drivers.\n");

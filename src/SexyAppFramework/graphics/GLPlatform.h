@@ -49,15 +49,35 @@
 // When true, a desktop GL compatibility context is in use and shaders
 extern bool gDesktopGLFallback;
 
-#ifdef NINTENDO_SWITCH
+#ifdef __SWITCH__
 
 #include <switch.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
+#include <SDL.h>
+
+#ifndef SEXY_EGL_DECLARED
+#define SEXY_EGL_DECLARED
+typedef void *EGLDisplay;
+typedef void *EGLSurface;
+typedef unsigned int EGLBoolean;
+extern "C" {
+    EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface);
+    void* eglGetProcAddress(const char *name);
+}
+#endif
+
+inline void *PlatformLoader(const char *name)
+{
+	void *result = (void*)eglGetProcAddress(name);
+	if (result == NULL)
+	{
+		printf("eglGetProcAddress %s %p\n", name, result);
+	}
+	return result;
+}
 
 inline void PlatformGLInit()
 {
-	gladLoadGLES2((GLADloadfunc)eglGetProcAddress);
+	gladLoadGLES2((GLADloadfunc)PlatformLoader);
 }
 
 #else
