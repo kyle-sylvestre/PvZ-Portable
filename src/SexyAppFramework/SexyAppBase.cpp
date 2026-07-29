@@ -2257,7 +2257,7 @@ void SexyAppBase::StartLoadingThread()
 		mYieldMainThread = true; 
 		//::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);		
 		mLoadingThreadStarted = true;
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(__SWITCH__)
 		LoadingThreadProcStub(this);
 #else
         //_beginthread(LoadingThreadProcStub, 0, this);
