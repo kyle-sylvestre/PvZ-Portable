@@ -50,7 +50,11 @@ jobs:
       - name: Compile libopenmpt for Switch
         shell: bash
         run: |
+          dkp-pacman -S --needed --noconfirm switch-sdl2 switch-libogg switch-libvorbis switch-mpg123 switch-libpng switch-libjpeg-turbo switch-zlib switch-cmake
+          dkp-pacman -R --noconfirm switch-sdl2_mixer switch-mpg123 # fix linker error
           source $DEVKITPRO/switchvars.sh
+          export PKG_CONFIG_SYSROOT_DIR=
+          export PKG_CONFIG_LIBDIR=$DEVKITPRO/portlibs/switch/lib/pkgconfig
           git clone https://github.com/OpenMPT/openmpt
           cd openmpt
           make CONFIG=gcc SHARED_LIB=0 DYNLINK=0 EXAMPLES=0 OPENMPT123=0 TEST=0 PREFIX=$PORTLIBS_PREFIX install 
@@ -59,6 +63,8 @@ jobs:
         shell: bash
         run: |
           source $DEVKITPRO/switchvars.sh
+          export PKG_CONFIG_SYSROOT_DIR=
+          export PKG_CONFIG_LIBDIR=$DEVKITPRO/portlibs/switch/lib/pkgconfig
           mkdir build
           cd build
           aarch64-none-elf-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-O2
