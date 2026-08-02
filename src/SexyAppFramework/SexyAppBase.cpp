@@ -117,6 +117,7 @@ SexyAppBase::SexyAppBase()
     mPrimaryThreadId = std::this_thread::get_id();
 
 	SDL_Init(SDL_INIT_TIMER);
+    SDL_Init(SDL_INIT_GAMECONTROLLER);
 
 	mNotifyGameMessage = 0;
 
@@ -412,6 +413,13 @@ bool SexyAppBase::IsScreenSaver()
 bool SexyAppBase::AppCanRestore()
 {
 	return !mIsDisabled;
+}
+
+void SexyAppBase::HandleEvent(SDL_Event *ev)
+{
+}
+void SexyAppBase::DrawAboveWidgets(Graphics *g)
+{
 }
 
 bool SexyAppBase::ReadDemoBuffer(std::string &theError)
@@ -2386,8 +2394,11 @@ void SexyAppBase::EnforceCursor()
                                (mCursorNum == CURSOR_WAIT) 			? SDL_SYSTEM_CURSOR_WAIT:
                                (mCursorNum == CURSOR_NONE) 			? SDL_SYSTEM_CURSOR_ARROW :
                                (mCursorNum == CURSOR_CUSTOM) 		? SDL_SYSTEM_CURSOR_ARROW : SDL_SYSTEM_CURSOR_ARROW;
-		cursor = SDL_CreateSystemCursor(sys);
-        SDL_SetCursor(cursor);
+        if (mCursorNum != CURSOR_NONE)
+        {
+            cursor = SDL_CreateSystemCursor(sys);
+            SDL_SetCursor(cursor);
+        }
 	}
 	SDL_ShowCursor((mCursorNum != CURSOR_NONE) ? SDL_ENABLE : SDL_DISABLE);
 }

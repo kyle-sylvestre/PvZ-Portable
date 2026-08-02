@@ -30,6 +30,7 @@
 #include "graphics/Color.h"
 #include "widget/ButtonListener.h"
 #include "widget/DialogListener.h"
+#include "widget/WidgetContainer.h"
 #include "misc/Buffer.h"
 #include <mutex>
 #include <thread>
@@ -590,6 +591,8 @@ public:
 	void					ClearUpdateBacklog(bool relaxForASecond = false);
 	bool					IsScreenSaver();
 	virtual bool			AppCanRestore();
+	virtual void 			HandleEvent(SDL_Event *ev);
+    virtual void 			DrawAboveWidgets(Graphics *g);
 };
 
 extern SexyAppBase* gSexyAppBase;

@@ -22,6 +22,7 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "SexyAppBase.h"
 #include "WidgetContainer.h"
 #include "Common.h"
 #include "WidgetManager.h"
@@ -173,6 +174,51 @@ Widget* WidgetContainer::GetWidgetAtHelper(int x, int y, int theFlags, bool* fou
 	
 	*found = false;
 	return nullptr;
+}
+
+std::vector<Widget *> WidgetContainer::GetClickableWidgets(Rect r, int theFlags)
+{
+    bool belowModal = false;
+    std::vector<Widget *> result;
+
+    ModFlags(theFlags, mWidgetFlagsMod);
+
+    WidgetList::reverse_iterator anItr = mWidgets.rbegin();
+    while (anItr != mWidgets.rend())
+    {
+        Widget* aWidget = *anItr;
+
+        int aCurFlags = theFlags;
+        ModFlags(aCurFlags, aWidget->mWidgetFlagsMod);
+        if (belowModal) ModFlags(aCurFlags, mWidgetManager->mBelowModalFlagsMod);
+
+        if (aCurFlags & WIDGETFLAGS_ALLOW_MOUSE)
+        {
+            if (aWidget->mVisible)
+            {
+                bool childFound;
+                if ((aWidget->mDoFinger) && (!aWidget->mDisabled) && (aWidget->mMouseVisible) && (aWidget->GetInsetRect().Intersects(r)))
+                {
+                    int x = aWidget->mX + aWidget->mWidth / 2.0f;
+                    int y = aWidget->mY + aWidget->mHeight / 2.0f;
+                    bool found = false;
+                    int wx = 0;
+                    int wy = 0;
+                    Widget *w = GetWidgetAtHelper(x, y, theFlags, &found, &wx, &wy);
+                    if (w && (aWidget == w || !IsBelow(aWidget, w)))
+                    {
+                        result.push_back(aWidget);
+                    }
+                }
+            }
+        }
+        
+        belowModal |= aWidget == mWidgetManager->mBaseModalWidget;
+
+        ++anItr;
+    }
+    
+    return result;
 }
 
 bool WidgetContainer::IsBelowHelper(Widget* theWidget1, Widget* theWidget2, bool* found)

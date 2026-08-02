@@ -364,6 +364,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 	SDL_Event event;
 	if (SDL_PollEvent(&event))
 	{
+        HandleEvent(&event);
 		switch(event.type)
 		{
 			case SDL_QUIT:
