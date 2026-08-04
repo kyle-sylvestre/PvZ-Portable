@@ -146,13 +146,13 @@ SDLSoundManager::SDLSoundManager()
 
 	if (SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
-        printf("Failed to initialize SDL audio subsystem\n");
+        SDL_Log("SDL_InitSubSystem(SDL_INIT_AUDIO):%s", SDL_GetError());
 		return;
     }
 
 	if (Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 2048))
 	{
-		printf("Failed to initialize SDL mixer\n");
+        SDL_Log("Mix_OpenAudio:%s", SDL_GetError());
 		return;
 	}
 	mInitializedMixer = true;

@@ -116,9 +116,15 @@ SexyAppBase::SexyAppBase()
 	gSexyAppBase = this;
     mPrimaryThreadId = std::this_thread::get_id();
 
-	SDL_Init(SDL_INIT_TIMER);
-    SDL_Init(SDL_INIT_GAMECONTROLLER);
-
+	if (0 > SDL_Init(SDL_INIT_TIMER))
+    {
+        SDL_Log("SDL_Init(SDL_INIT_TIMER): %s", SDL_GetError());
+    }
+    if (0 > SDL_Init(SDL_INIT_GAMECONTROLLER))
+    {
+        SDL_Log("SDL_Init(SDL_INIT_GAMECONTROLLER): %s", SDL_GetError());
+    }
+    SDL_Log("SDL_NumJoysticks: %d", SDL_NumJoysticks());
 	mNotifyGameMessage = 0;
 
 #ifdef _PVZ_DEBUG
@@ -1797,7 +1803,7 @@ int SexyAppBase::MsgBox(const std::string& theText, const std::string& theTitle,
     {
         BeginPopup();
         
-        printf("%s\n===\n%s\n", theTitle.c_str(), theText.c_str());
+        SDL_Log("%s\n===\n%s\n", theTitle.c_str(), theText.c_str());
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, theTitle.c_str(), theText.c_str(), (SDL_Window*)mWindow);
         
 #ifdef __SWITCH__
@@ -1846,7 +1852,7 @@ void SexyAppBase::Popup(const std::string& theString)
         
         BeginPopup();
         if (!mShutdown)
-            printf("FATAL ERROR\n===\n%s\n", theString.c_str());
+            SDL_Log("FATAL ERROR\n===\n%s\n", theString.c_str());
         
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FATAL ERROR", theString.c_str(), (SDL_Window*)mWindow);
 #ifdef __SWITCH__
@@ -2253,7 +2259,7 @@ void SexyAppBase::LoadingThreadProcStub(SexyAppBase *theArg)
 	
 	aSexyApp->LoadingThreadProc();		
 
-	printf("Resource Loading Time: %d\r\n", (SDL_GetTicks() - aSexyApp->mTimeLoaded));
+	SDL_Log("Resource Loading Time: %d\r\n", (SDL_GetTicks() - aSexyApp->mTimeLoaded));
 
 	aSexyApp->mLoadingThreadCompleted = true;
 }
@@ -2918,16 +2924,16 @@ void SexyAppBase::Start()
 
 	WaitForLoadingThread();
 
-	printf("Seconds       = %g\r\n", (SDL_GetTicks() - aStartTime) / 1000.0);
-	//printf("Count         = %d\r\n", aCount);
-	printf("Sleep Count   = %d\r\n", mSleepCount);
-	printf("Update Count  = %d\r\n", mUpdateCount);
-	printf("Draw Count    = %d\r\n", mDrawCount);
-	printf("Draw Time     = %d\r\n", mDrawTime);
-	printf("Screen Blt    = %d\r\n", mScreenBltTime);
+	SDL_Log("Seconds       = %g", (SDL_GetTicks() - aStartTime) / 1000.0);
+	//SDL_Log("Count         = %d", aCount);
+	SDL_Log("Sleep Count   = %d", mSleepCount);
+	SDL_Log("Update Count  = %d", mUpdateCount);
+	SDL_Log("Draw Count    = %d", mDrawCount);
+	SDL_Log("Draw Time     = %d", mDrawTime);
+	SDL_Log("Screen Blt    = %d", mScreenBltTime);
 	if (mDrawTime+mScreenBltTime > 0)
 	{
-		printf("Avg FPS       = %d\r\n", (mDrawCount*1000)/(mDrawTime+mScreenBltTime));
+		SDL_Log("Avg FPS       = %d", (mDrawCount*1000)/(mDrawTime+mScreenBltTime));
 	}
 
 	//timeEndPeriod(1);	
@@ -3433,7 +3439,7 @@ void SexyAppBase::Init()
 
 	if (mGLInterface == nullptr)
 	{
-		fprintf(stderr, "FATAL: Failed to create OpenGL interface.\n");
+		SDL_Log("FATAL: Failed to create OpenGL interface");
 		mShutdown = true;
 		return;
 	}
