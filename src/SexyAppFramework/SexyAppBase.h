@@ -30,6 +30,7 @@
 #include "graphics/Color.h"
 #include "widget/ButtonListener.h"
 #include "widget/DialogListener.h"
+#include "widget/WidgetContainer.h"
 #include "misc/Buffer.h"
 #include <mutex>
 #include <thread>
@@ -590,6 +591,10 @@ public:
 	void					ClearUpdateBacklog(bool relaxForASecond = false);
 	bool					IsScreenSaver();
 	virtual bool			AppCanRestore();
+	// Controller/joystick hooks. Overridden by the game app to implement
+	// gamepad navigation and to draw its virtual cursor above all widgets.
+	virtual void			HandleEvent(SDL_Event* theEvent);
+	virtual void			DrawAboveWidgets(Graphics* g);
 };
 
 extern SexyAppBase* gSexyAppBase;

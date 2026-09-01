@@ -63,6 +63,7 @@ public:
 
 public:	
 	Widget*					GetWidgetAtHelper(int x, int y, int theFlags, bool* found, int* theWidgetX, int* theWidgetY);
+	std::vector<Widget*>	GetClickableWidgets(Rect r, int theFlags);
 	bool					IsBelowHelper(Widget* theWidget1, Widget* theWidget2, bool* found);
 	void					InsertWidgetHelper(const WidgetList::iterator &where, Widget *theWidget);
 

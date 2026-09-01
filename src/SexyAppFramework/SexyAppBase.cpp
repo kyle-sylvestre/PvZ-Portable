@@ -117,6 +117,8 @@ SexyAppBase::SexyAppBase()
     mPrimaryThreadId = std::this_thread::get_id();
 
 	SDL_Init(SDL_INIT_TIMER);
+	if (SDL_Init(SDL_INIT_GAMECONTROLLER) < 0)
+		SDL_Log("SDL_Init(SDL_INIT_GAMECONTROLLER): %s", SDL_GetError());
 
 	mNotifyGameMessage = 0;
 
@@ -412,6 +414,14 @@ bool SexyAppBase::IsScreenSaver()
 bool SexyAppBase::AppCanRestore()
 {
 	return !mIsDisabled;
+}
+
+void SexyAppBase::HandleEvent(SDL_Event* theEvent)
+{
+}
+
+void SexyAppBase::DrawAboveWidgets(Graphics* g)
+{
 }
 
 bool SexyAppBase::ReadDemoBuffer(std::string &theError)
