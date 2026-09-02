@@ -117,8 +117,53 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 
 		for (auto& k : keyMaps)
 		{
-			if (kDown & k.first)
+			if (kUp & k.first)
 				mWidgetManager->KeyUp(k.second);
+		}
+	}
+
+	SDL_Event event;
+	while (SDL_PollEvent(&event))
+	{
+		HandleEvent(&event);
+
+		switch (event.type)
+		{
+			case SDL_CONTROLLERDEVICEADDED:
+			case SDL_CONTROLLERDEVICEREMOVED:
+			case SDL_CONTROLLERBUTTONDOWN:
+			case SDL_CONTROLLERAXISMOTION:
+				mLastUserInputTick = mLastTimerTime;
+				break;
+
+			case SDL_MOUSEMOTION:
+			{
+				int x = event.motion.x;
+				int y = event.motion.y;
+				mWidgetManager->RemapMouse(x, y);
+
+				mLastUserInputTick = mLastTimerTime;
+				mWidgetManager->MouseMove(x, y);
+				break;
+			}
+
+			case SDL_MOUSEBUTTONDOWN:
+			case SDL_MOUSEBUTTONUP:
+			{
+				int x = event.button.x;
+				int y = event.button.y;
+				mWidgetManager->RemapMouse(x, y);
+
+				mLastUserInputTick = mLastTimerTime;
+				mWidgetManager->MouseMove(x, y);
+
+				int btn = (event.button.button == SDL_BUTTON_RIGHT) ? -1 : 1;
+				if (event.type == SDL_MOUSEBUTTONDOWN)
+					mWidgetManager->MouseDown(x, y, btn);
+				else
+					mWidgetManager->MouseUp(x, y, btn);
+				break;
+			}
 		}
 	}
 
