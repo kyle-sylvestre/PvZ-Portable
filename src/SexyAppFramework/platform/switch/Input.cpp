@@ -33,13 +33,34 @@
 using namespace Sexy;
 
 static PadState pad;
+
+// Everything the controller does in-game or in the menus is handled by the app's
+// SexyAppBase::HandleEvent override (see CircleShootApp), which owns A, B, Plus
+// and the d-pad. Only Minus is left to the framework, as a universal "back" that
+// nothing on the controller path claims.
 static std::unordered_map<u64, KeyCode> keyMaps = {
-	{HidNpadButton_Plus,  KEYCODE_ESCAPE},
-	{HidNpadButton_Minus, KEYCODE_SPACE},
-	{HidNpadButton_A,     KEYCODE_RETURN},
-	{HidNpadButton_L,     KEYCODE_LBUTTON},
-	{HidNpadButton_R,     KEYCODE_RBUTTON},
+	{HidNpadButton_Minus, KEYCODE_ESCAPE},
 };
+
+// SDL's Switch driver maps the game controller positionally (Xbox layout), so its
+// "A" is the physical bottom button -- Nintendo's B -- and its "B" is the physical
+// right button. The app treats SDL_CONTROLLER_BUTTON_A as fire/confirm, so swap the
+// pair on the way in to put confirm on the Switch's own A button, as players expect.
+// Set this to 0 to use SDL's positional layout instead.
+#define SWITCH_SWAP_AB_TO_LABELS 1
+
+static void RelabelControllerButton(SDL_Event* theEvent)
+{
+#if SWITCH_SWAP_AB_TO_LABELS
+	if (theEvent->type == SDL_CONTROLLERBUTTONDOWN || theEvent->type == SDL_CONTROLLERBUTTONUP)
+	{
+		if (theEvent->cbutton.button == SDL_CONTROLLER_BUTTON_A)
+			theEvent->cbutton.button = SDL_CONTROLLER_BUTTON_B;
+		else if (theEvent->cbutton.button == SDL_CONTROLLER_BUTTON_B)
+			theEvent->cbutton.button = SDL_CONTROLLER_BUTTON_A;
+	}
+#endif
+}
 
 void SexyAppBase::InitInput()
 {
@@ -50,6 +71,11 @@ void SexyAppBase::InitInput()
 	padInitializeDefault(&pad);
 
 	hidInitializeTouchScreen();
+
+	// SDL_INIT_GAMECONTROLLER is requested in the SexyAppBase constructor, which has
+	// already run by this point. Report what it found so a missing pad is diagnosable
+	// from the on-device log rather than looking like dead input.
+	SDL_Log("InitInput: %d joystick(s) attached", SDL_NumJoysticks());
 
 	if (!mMouseIn)
 		mMouseIn = true;
@@ -117,8 +143,60 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 
 		for (auto& k : keyMaps)
 		{
-			if (kDown & k.first)
+			if (kUp & k.first)
 				mWidgetManager->KeyUp(k.second);
+		}
+	}
+
+	// The Switch build drives its window through EGL rather than SDL, so nothing else
+	// pumps the SDL event queue. Drain it here: it carries the gamepad events that the
+	// app's HandleEvent override navigates with, and the synthetic mouse events that
+	// same code pushes back to move and click its virtual cursor.
+	SDL_Event event;
+	while (SDL_PollEvent(&event))
+	{
+		RelabelControllerButton(&event);
+		HandleEvent(&event);
+
+		switch (event.type)
+		{
+			case SDL_CONTROLLERDEVICEADDED:
+			case SDL_CONTROLLERDEVICEREMOVED:
+			case SDL_CONTROLLERBUTTONDOWN:
+			case SDL_CONTROLLERAXISMOTION:
+				mLastUserInputTick = mLastTimerTime;
+				break;
+
+			case SDL_MOUSEMOTION:
+			{
+				int x = event.motion.x;
+				int y = event.motion.y;
+				mWidgetManager->RemapMouse(x, y);
+
+				mLastUserInputTick = mLastTimerTime;
+				mWidgetManager->MouseMove(x, y);
+				break;
+			}
+
+			case SDL_MOUSEBUTTONDOWN:
+			case SDL_MOUSEBUTTONUP:
+			{
+				int x = event.button.x;
+				int y = event.button.y;
+				mWidgetManager->RemapMouse(x, y);
+
+				mLastUserInputTick = mLastTimerTime;
+				mWidgetManager->MouseMove(x, y);
+
+				// These are pushed by the app with button left zeroed, so treat
+				// anything that is not an explicit right-click as a left click.
+				int btn = (event.button.button == SDL_BUTTON_RIGHT) ? -1 : 1;
+				if (event.type == SDL_MOUSEBUTTONDOWN)
+					mWidgetManager->MouseDown(x, y, btn);
+				else
+					mWidgetManager->MouseUp(x, y, btn);
+				break;
+			}
 		}
 	}
 

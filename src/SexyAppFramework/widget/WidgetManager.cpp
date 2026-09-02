@@ -479,6 +479,11 @@ bool WidgetManager::DrawScreen()
 
 			++anItr;
 		}
+
+		Graphics aClipG(g);
+		aClipG.SetFastStretch(!is3D);
+		aClipG.SetLinearBlend(is3D);
+		mApp->DrawAboveWidgets(&aClipG);
 	}
 	
 	FlushDeferredOverlayWidgets(0x7FFFFFFF);
