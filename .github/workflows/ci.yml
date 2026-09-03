@@ -55,9 +55,11 @@ jobs:
           source $DEVKITPRO/switchvars.sh
           export PKG_CONFIG_SYSROOT_DIR=
           export PKG_CONFIG_LIBDIR=$DEVKITPRO/portlibs/switch/lib/pkgconfig
-          git clone https://github.com/OpenMPT/openmpt
+          git clone --depth 1 --branch libopenmpt-0.8.9 https://github.com/OpenMPT/openmpt
           cd openmpt
-          make CONFIG=gcc SHARED_LIB=0 DYNLINK=0 EXAMPLES=0 OPENMPT123=0 TEST=0 PREFIX=$PORTLIBS_PREFIX install 
+          make CONFIG=gcc CC=aarch64-none-elf-gcc CXX=aarch64-none-elf-g++ AR=aarch64-none-elf-ar \
+            SHARED_LIB=0 STATIC_LIB=1 DYNLINK=0 EXAMPLES=0 OPENMPT123=0 TEST=0 NO_MPG123=1 \
+            PREFIX=$PORTLIBS_PREFIX install
 
       - name: Compile Zuma-Portable for Switch
         shell: bash
