@@ -212,6 +212,7 @@ public:
 	bool					mReadFromRegistry;
 	std::string				mRegisterLink;
 	std::string				mProductVersion;	
+	bool					mCursorHidden;
 	Image*					mCursorImages[NUM_CURSORS];
 	bool					mIsOpeningURL;
 	bool					mShutdownOnURLOpen;

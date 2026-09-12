@@ -358,6 +358,7 @@ SexyAppBase::SexyAppBase()
 
 
 	mTabletPC = false;
+	mCursorHidden = false;
 }
 
 SexyAppBase::~SexyAppBase()
@@ -2368,6 +2369,12 @@ void SexyAppBase::SetAlphaDisabled(bool isDisabled)
 
 void SexyAppBase::EnforceCursor()
 {
+	if (mCursorHidden)
+    {
+        SDL_ShowCursor(SDL_DISABLE);
+        return;
+    }
+
 	static SDL_Cursor *cursor = NULL;
 	SDL_FreeCursor(cursor);
 	cursor = NULL;
