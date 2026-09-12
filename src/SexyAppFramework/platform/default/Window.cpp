@@ -51,7 +51,10 @@ void SexyAppBase::MakeWindow()
 		SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 #endif
 
-		SDL_Init(SDL_INIT_VIDEO);
+        if (0 > SDL_Init(SDL_INIT_VIDEO))
+        {
+            SDL_Log("SDL_Init(SDL_INIT_VIDEO):%s", SDL_GetError());
+        }
 
 		Uint32 winFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 			| (!mIsWindowed ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
@@ -65,6 +68,9 @@ void SexyAppBase::MakeWindow()
 			mTitle.c_str(),
 			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 			mWidth * IMG_DOWNSCALE, mHeight * IMG_DOWNSCALE, winFlags);
+        
+        if (mWindow == NULL)
+            SDL_Log("SDL_CreateWindow", SDL_GetError());
 
 		if (mWindow)
 			mContext = (void*)SDL_GL_CreateContext((SDL_Window*)mWindow);
@@ -79,14 +85,15 @@ void SexyAppBase::MakeWindow()
 		}
 		if (!mContext)
 		{
+            SDL_Log("SDL_GL_CreateContext:%s", SDL_GetError());
 			if (mWindow) { SDL_DestroyWindow((SDL_Window*)mWindow); mWindow = nullptr; }
-			fprintf(stderr, "Failed to create OpenGL ES context.\n");
 			return;
 		}
 #else
 		// Fallback: desktop GL 2.1 compatibility (macOS, old Windows drivers, etc.)
 		if (!mContext)
 		{
+            SDL_Log("SDL_GL_CreateContext:%s", SDL_GetError());
 			if (mWindow) { SDL_DestroyWindow((SDL_Window*)mWindow); mWindow = nullptr; }
 
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
@@ -97,15 +104,17 @@ void SexyAppBase::MakeWindow()
 				mTitle.c_str(),
 				SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 				mWidth * IMG_DOWNSCALE, mHeight * IMG_DOWNSCALE, winFlags);
+            
+            if (mWindow == NULL)
+                SDL_Log("SDL_CreateWindow:%s", SDL_GetError());
 
 			if (mWindow)
 				mContext = (void*)SDL_GL_CreateContext((SDL_Window*)mWindow);
 
 			if (!mContext)
 			{
+                SDL_Log("SDL_GL_CreateContext:%s", SDL_GetError());
 				if (mWindow) { SDL_DestroyWindow((SDL_Window*)mWindow); mWindow = nullptr; }
-				fprintf(stderr, "Failed to create any OpenGL context. "
-					"Please check your graphics drivers.\n");
 				return;
 			}
 

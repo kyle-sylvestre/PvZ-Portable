@@ -25,7 +25,7 @@
 #define GLAD_GLES2_IMPLEMENTATION
 #include "graphics/GLPlatform.h"
 
-#ifndef NINTENDO_SWITCH
+#ifndef __SWITCH__
 #include <SDL.h>
 #endif
 
@@ -1123,7 +1123,7 @@ void GLInterface::UpdateViewport()
 {
 	int vx = 0, vy = 0, vw, vh;
 
-#ifdef NINTENDO_SWITCH
+#ifdef __SWITCH__
 	int width = 1280, height = 720;
 #else
 	int width, height;
@@ -1167,6 +1167,12 @@ int GLInterface::Init(bool IsWindowed)
                     message += Sexy::StrFormat("\nVersion found: %s", version);
                 }
             }
+            
+#if defined(__SWITCH__)
+            PFNGLGETSTRINGPROC proc = (PFNGLGETSTRINGPROC)eglGetProcAddress("glGetString");
+            message += Sexy::StrFormat("\nSDL %p %s", proc, (proc) ? (char*)proc(GL_VERSION) : "???");
+#endif
+            
             gSexyAppBase->Popup(message);
             return 0;
 		}
@@ -1253,7 +1259,7 @@ bool GLInterface::PreDraw()
 void GLInterface::Flush()
 {
 	gNumVertices = 0;
-#ifdef NINTENDO_SWITCH
+#ifdef __SWITCH__
 	eglSwapBuffers(mApp->mWindow, mApp->mSurface);
 #else
 	SDL_GL_SwapWindow((SDL_Window*)mApp->mWindow);

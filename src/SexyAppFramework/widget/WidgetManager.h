@@ -100,12 +100,12 @@ public:
 	
 	int						mWidgetFlags;
 
-protected:
+public:
 	int						GetWidgetFlags();
 	void					MouseEnter(Widget* theWidget);
 	void					MouseLeave(Widget* theWidget);
 
-protected:
+public:
 	void					SetBaseModal(Widget* theWidget, const FlagsMod& theBelowFlagsMod);
 
 public:

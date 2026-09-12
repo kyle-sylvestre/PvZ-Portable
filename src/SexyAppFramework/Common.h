@@ -53,6 +53,7 @@
 #include <mmsystem.h>
 #else
 #include <strings.h>
+#undef _S // nintendo switch redefinition
 #define _S(x) x
 typedef time_t __time64_t;
 typedef void *HWND, *HFONT;

@@ -30,6 +30,7 @@
 #include "graphics/Color.h"
 #include "widget/ButtonListener.h"
 #include "widget/DialogListener.h"
+#include "widget/WidgetContainer.h"
 #include "misc/Buffer.h"
 #include <mutex>
 #include <thread>
@@ -188,6 +189,7 @@ public:
 	DialogMap				mDialogMap;
 	DialogList				mDialogList;
 	std::thread::id			mPrimaryThreadId;
+    std::thread             mLoadingThread;
 	bool					mSEHOccured;
 	bool					mShutdown;
 	bool					mExitToTop;
@@ -210,6 +212,7 @@ public:
 	bool					mReadFromRegistry;
 	std::string				mRegisterLink;
 	std::string				mProductVersion;	
+	bool					mCursorHidden;
 	Image*					mCursorImages[NUM_CURSORS];
 	bool					mIsOpeningURL;
 	bool					mShutdownOnURLOpen;
@@ -589,6 +592,8 @@ public:
 	void					ClearUpdateBacklog(bool relaxForASecond = false);
 	bool					IsScreenSaver();
 	virtual bool			AppCanRestore();
+	virtual void 			HandleEvent(SDL_Event *ev);
+    virtual void 			DrawAboveWidgets(Graphics *g);
 };
 
 extern SexyAppBase* gSexyAppBase;

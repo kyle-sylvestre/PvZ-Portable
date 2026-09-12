@@ -51,9 +51,30 @@ PakInterface::~PakInterface()
 std::string PakInterface::NormalizePakPath(std::string_view theFileName)
 {
 	std::filesystem::path aFilePath = Sexy::PathFromU8(std::string(theFileName));
+    
+    bool has_root_directory = false;
+#if defined(__SWITCH__)
+    std::string aFilePathString = aFilePath.string();
+    size_t aColonPos = aFilePathString.find(':');
+    size_t aSlashPos = aFilePathString.find('/');
+    if (aColonPos != std::string::npos &&
+        aSlashPos != std::string::npos)
+    {
+        if (aColonPos < aSlashPos)
+        {
+            has_root_directory = true;
+        }
+    }
+    if (aSlashPos == 0)
+    {
+        has_root_directory = true;
+    }
+#else
+    has_root_directory = aFilePath.has_root_directory();
+#endif
 
 	// Make absolute paths relative to resource folder.
-	if (aFilePath.has_root_directory())
+	if (has_root_directory)
 	{
 		const std::string& aResourceFolder = Sexy::GetResourceFolder();
 		if (!aResourceFolder.empty())
@@ -203,10 +224,31 @@ PFILE* PakInterface::FOpen(const char* theFileName, const char* anAccess)
 			return aPFP;
 		}
 	}
+    
+    bool has_root_directory = false;
+#if defined(__SWITCH__)
+    const std::string &aFilePathString = theFileName;
+    size_t aColonPos = aFilePathString.find(':');
+    size_t aSlashPos = aFilePathString.find('/');
+    if (aColonPos != std::string::npos &&
+        aSlashPos != std::string::npos)
+    {
+        if (aColonPos < aSlashPos)
+        {
+            has_root_directory = true;
+        }
+    }
+    if (aSlashPos == 0)
+    {
+        has_root_directory = true;
+    }
+#else
+    has_root_directory = Sexy::PathFromU8(theFileName).has_root_directory();
+#endif
 
 	const std::string& aResourceBase = Sexy::GetResourceFolder();
 	FILE* aFP = nullptr;
-	if (!aResourceBase.empty() && !Sexy::PathFromU8(theFileName).has_root_directory())
+	if (!aResourceBase.empty() && !has_root_directory)
 	{
 		aFP = fcaseopenat(aResourceBase.c_str(), theFileName, anAccess);
 	}

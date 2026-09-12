@@ -22,8 +22,14 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EGL/egl.h>    // EGL library
-#include <EGL/eglext.h> // EGL extensions
+// devkitPro bug: switch.h redefines EGLAPIENTRY in a way that breaks the
+// EGLAPIENTRYP macro chain in <EGL/eglplatform.h>. Define EGLAPIENTRYP
+// explicitly before the EGL headers so the function-pointer typedefs compile.
+#ifndef EGLAPIENTRYP
+#  define EGLAPIENTRYP *
+#endif
+#include <EGL/egl.h>
+#define SEXY_EGL_DECLARED // Prevent GLPlatform.h from redeclaring these
 
 #include <switch.h>
 

@@ -116,8 +116,15 @@ SexyAppBase::SexyAppBase()
 	gSexyAppBase = this;
     mPrimaryThreadId = std::this_thread::get_id();
 
-	SDL_Init(SDL_INIT_TIMER);
-
+	if (0 > SDL_Init(SDL_INIT_TIMER))
+    {
+        SDL_Log("SDL_Init(SDL_INIT_TIMER): %s", SDL_GetError());
+    }
+    if (0 > SDL_Init(SDL_INIT_GAMECONTROLLER))
+    {
+        SDL_Log("SDL_Init(SDL_INIT_GAMECONTROLLER): %s", SDL_GetError());
+    }
+    SDL_Log("SDL_NumJoysticks: %d", SDL_NumJoysticks());
 	mNotifyGameMessage = 0;
 
 #ifdef _PVZ_DEBUG
@@ -351,6 +358,7 @@ SexyAppBase::SexyAppBase()
 
 
 	mTabletPC = false;
+	mCursorHidden = false;
 }
 
 SexyAppBase::~SexyAppBase()
@@ -412,6 +420,13 @@ bool SexyAppBase::IsScreenSaver()
 bool SexyAppBase::AppCanRestore()
 {
 	return !mIsDisabled;
+}
+
+void SexyAppBase::HandleEvent(SDL_Event *ev)
+{
+}
+void SexyAppBase::DrawAboveWidgets(Graphics *g)
+{
 }
 
 bool SexyAppBase::ReadDemoBuffer(std::string &theError)
@@ -856,16 +871,8 @@ std::string SexyAppBase::GetProductVersion(const std::string& thePath)
 
 void SexyAppBase::WaitForLoadingThread()
 {
-#ifdef __EMSCRIPTEN__
-	return;
-#endif
-	int ms = 20;
-
-	timespec ts;
-	ts.tv_sec = ms / 1000;
-	ts.tv_nsec = (ms % 1000) * 1000000;
-	while ((mLoadingThreadStarted) && (!mLoadingThreadCompleted))
-		nanosleep(&ts, &ts);
+    if (mLoadingThread.joinable())
+        mLoadingThread.join();
 }
 
 void SexyAppBase::SetCursorImage(int theCursorNum, Image* theImage)
@@ -1797,7 +1804,7 @@ int SexyAppBase::MsgBox(const std::string& theText, const std::string& theTitle,
     {
         BeginPopup();
         
-        printf("%s\n===\n%s\n", theTitle.c_str(), theText.c_str());
+        SDL_Log("%s\n===\n%s\n", theTitle.c_str(), theText.c_str());
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, theTitle.c_str(), theText.c_str(), (SDL_Window*)mWindow);
         
 #ifdef __SWITCH__
@@ -1846,7 +1853,7 @@ void SexyAppBase::Popup(const std::string& theString)
         
         BeginPopup();
         if (!mShutdown)
-            printf("FATAL ERROR\n===\n%s\n", theString.c_str());
+            SDL_Log("FATAL ERROR\n===\n%s\n", theString.c_str());
         
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "FATAL ERROR", theString.c_str(), (SDL_Window*)mWindow);
 #ifdef __SWITCH__
@@ -2253,7 +2260,7 @@ void SexyAppBase::LoadingThreadProcStub(SexyAppBase *theArg)
 	
 	aSexyApp->LoadingThreadProc();		
 
-	printf("Resource Loading Time: %d\r\n", (SDL_GetTicks() - aSexyApp->mTimeLoaded));
+	SDL_Log("Resource Loading Time: %d\r\n", (SDL_GetTicks() - aSexyApp->mTimeLoaded));
 
 	aSexyApp->mLoadingThreadCompleted = true;
 }
@@ -2265,11 +2272,11 @@ void SexyAppBase::StartLoadingThread()
 		mYieldMainThread = true; 
 		//::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);		
 		mLoadingThreadStarted = true;
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(__SWITCH__)
 		LoadingThreadProcStub(this);
 #else
-		//_beginthread(LoadingThreadProcStub, 0, this);
-		std::thread(LoadingThreadProcStub, this).detach();
+        //_beginthread(LoadingThreadProcStub, 0, this);
+        mLoadingThread = std::thread(LoadingThreadProcStub, this); // keep joinable: detach() throws on devkitA64/libnx
 #endif
 	}
 }
@@ -2362,6 +2369,12 @@ void SexyAppBase::SetAlphaDisabled(bool isDisabled)
 
 void SexyAppBase::EnforceCursor()
 {
+	if (mCursorHidden)
+    {
+        SDL_ShowCursor(SDL_DISABLE);
+        return;
+    }
+
 	static SDL_Cursor *cursor = NULL;
 	SDL_FreeCursor(cursor);
 	cursor = NULL;
@@ -2394,8 +2407,11 @@ void SexyAppBase::EnforceCursor()
                                (mCursorNum == CURSOR_WAIT) 			? SDL_SYSTEM_CURSOR_WAIT:
                                (mCursorNum == CURSOR_NONE) 			? SDL_SYSTEM_CURSOR_ARROW :
                                (mCursorNum == CURSOR_CUSTOM) 		? SDL_SYSTEM_CURSOR_ARROW : SDL_SYSTEM_CURSOR_ARROW;
-		cursor = SDL_CreateSystemCursor(sys);
-        SDL_SetCursor(cursor);
+        if (mCursorNum != CURSOR_NONE)
+        {
+            cursor = SDL_CreateSystemCursor(sys);
+            SDL_SetCursor(cursor);
+        }
 	}
 	SDL_ShowCursor((mCursorNum != CURSOR_NONE) ? SDL_ENABLE : SDL_DISABLE);
 }
@@ -2915,16 +2931,16 @@ void SexyAppBase::Start()
 
 	WaitForLoadingThread();
 
-	printf("Seconds       = %g\r\n", (SDL_GetTicks() - aStartTime) / 1000.0);
-	//printf("Count         = %d\r\n", aCount);
-	printf("Sleep Count   = %d\r\n", mSleepCount);
-	printf("Update Count  = %d\r\n", mUpdateCount);
-	printf("Draw Count    = %d\r\n", mDrawCount);
-	printf("Draw Time     = %d\r\n", mDrawTime);
-	printf("Screen Blt    = %d\r\n", mScreenBltTime);
+	SDL_Log("Seconds       = %g", (SDL_GetTicks() - aStartTime) / 1000.0);
+	//SDL_Log("Count         = %d", aCount);
+	SDL_Log("Sleep Count   = %d", mSleepCount);
+	SDL_Log("Update Count  = %d", mUpdateCount);
+	SDL_Log("Draw Count    = %d", mDrawCount);
+	SDL_Log("Draw Time     = %d", mDrawTime);
+	SDL_Log("Screen Blt    = %d", mScreenBltTime);
 	if (mDrawTime+mScreenBltTime > 0)
 	{
-		printf("Avg FPS       = %d\r\n", (mDrawCount*1000)/(mDrawTime+mScreenBltTime));
+		SDL_Log("Avg FPS       = %d", (mDrawCount*1000)/(mDrawTime+mScreenBltTime));
 	}
 
 	//timeEndPeriod(1);	
@@ -3430,7 +3446,7 @@ void SexyAppBase::Init()
 
 	if (mGLInterface == nullptr)
 	{
-		fprintf(stderr, "FATAL: Failed to create OpenGL interface.\n");
+		SDL_Log("FATAL: Failed to create OpenGL interface");
 		mShutdown = true;
 		return;
 	}

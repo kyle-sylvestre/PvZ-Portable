@@ -52,14 +52,14 @@ static void SaveToFile()
 {
 	if (currFile.empty())
 	{
-		printf("RegEmu: Filename not specified, can't save\n");
+		SDL_Log("RegEmu: Filename not specified, can't save");
 		return;
 	}
 
 	std::ofstream f(Sexy::PathFromU8(currFile), std::ios::binary);
 	if (!f)
 	{
-		printf("RegEmu: Couldn't open '%s' for writing\n", currFile.c_str());
+		SDL_Log("RegEmu: Couldn't open '%s' for writing", currFile.c_str());
 		return;
 	}
 
@@ -102,14 +102,14 @@ void regemu::SetRegFile(const std::string& fileName)
 	std::ifstream f(Sexy::PathFromU8(currFile), std::ios::binary);
 	if (!f)
 	{
-		printf("RegEmu: Can't read '%s': File does not exist\n", currFile.c_str());
+		SDL_Log("RegEmu: Can't read '%s': File does not exist", currFile.c_str());
 		return;
 	}
 
 	char aHeader[6];
 	if (!f.read(aHeader, 6) || strncmp(aHeader, "REGEMU", 6))
 	{
-		printf("RegEmu: Can't read '%s': Invalid header\n", currFile.c_str());
+		SDL_Log("RegEmu: Can't read '%s': Invalid header", currFile.c_str());
 		return;
 	}
 
@@ -156,7 +156,7 @@ void regemu::SetRegFile(const std::string& fileName)
 		delete[] aKeyName;
 	}
 
-	printf("RegEmu: Loaded from '%s': %zu total key(s)\n", currFile.c_str(), static_cast<size_t>(registry.size()));
+	SDL_Log("RegEmu: Loaded from '%s': %zu total key(s)", currFile.c_str(), static_cast<size_t>(registry.size()));
 }
 
 bool regemu::RegistryRead(const std::string& keyName, const std::string& valueName, uint32_t* type, uint8_t* value, uint32_t* length)
@@ -164,7 +164,7 @@ bool regemu::RegistryRead(const std::string& keyName, const std::string& valueNa
 	if (!registry.count(keyName))
 	{
         bool aResult = false;
-		printf("RegEmu: Key '%s' does not exist\n", keyName.c_str());
+		SDL_Log("RegEmu: Key '%s' does not exist", keyName.c_str());
         
 #if defined(_WIN32)
         
@@ -212,7 +212,7 @@ bool regemu::RegistryRead(const std::string& keyName, const std::string& valueNa
 	}
 	if (!registry[keyName].count(valueName))
 	{
-		printf("RegEmu: Value '%s' does not exist\n", valueName.c_str());
+		SDL_Log("RegEmu: Value '%s' does not exist", valueName.c_str());
 		return false;
 	}
 
@@ -251,7 +251,7 @@ bool regemu::RegistryEraseKey(const std::string& keyName)
 		delete[] valuePair.second.mValue;
 
 	registry.erase(keyName);
-	printf("RegEmu: Erased key '%s'\n", keyName.c_str());
+	SDL_Log("RegEmu: Erased key '%s'", keyName.c_str());
 
 	SaveToFile();
 
@@ -265,7 +265,7 @@ bool regemu::RegistryEraseValue(const std::string& keyName, const std::string& v
 
 	delete[] registry[keyName][valueName].mValue;
 	registry[keyName].erase(valueName);
-	printf("RegEmu: Erased value '%s' from key '%s'\n", valueName.c_str(), keyName.c_str());
+	SDL_Log("RegEmu: Erased value '%s' from key '%s'", valueName.c_str(), keyName.c_str());
 
 	SaveToFile();
 

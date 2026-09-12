@@ -244,7 +244,10 @@ static KeyCode SDLKeyToKeyCode(SDL_Keycode theSDLKey)
 
 void SexyAppBase::InitInput()
 {
-	SDL_Init(SDL_INIT_EVENTS);
+    if (0 > SDL_Init(SDL_INIT_EVENTS))
+    {
+        SDL_Log("SDL_Init(SDL_INIT_EVENTS):%s", SDL_GetError());
+    }
 }
 
 bool SexyAppBase::StartTextInput(std::string& theInput)
@@ -364,6 +367,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 	SDL_Event event;
 	if (SDL_PollEvent(&event))
 	{
+        HandleEvent(&event);
 		switch(event.type)
 		{
 			case SDL_QUIT:
