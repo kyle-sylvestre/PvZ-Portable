@@ -81,7 +81,7 @@ jobs:
   build-windows-msvc-x86-release:
     if: inputs.build_windows_release
     name: Build for Windows (Release MSVC x86)
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v6
       with:
@@ -138,7 +138,7 @@ jobs:
   build-windows-msvc-x86-debug:
     if: inputs.build_windows_debug
     name: Build for Windows (Debug MSVC x86)
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v6
       with:
