@@ -19,6 +19,10 @@ on:
         description: "Build Nintendo Switch Release"
         type: boolean
         default: false
+      build_linux_release:
+        description: "Build Linux Release"
+        type: boolean
+        default: false
 
 env:
   VCPKG_BINARY_SOURCES: clear
@@ -339,5 +343,226 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: zuma-portable-android
+        path: dist/
+
+  build-linux-static:
+    if: inputs.build_linux_release
+    name: Build for Linux (${{ matrix.arch }}, static)
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+            container: quay.io/pypa/manylinux_2_34_x86_64
+
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+            container: quay.io/pypa/manylinux_2_34_aarch64
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        ref: zuma
+
+    - uses: actions/checkout@v6
+      with:
+        repository: kyle-sylvestre/CircleShootApp
+        path: src/CircleShoot
+
+    - name: Create flat SexyAppFramework
+      shell: bash
+      run: |
+        bash scripts/create_flat_directory.sh
+
+    - name: Fix Git Safe Directory
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+    - name: Install Dependencies
+      run: |
+        dnf install -y \
+          alsa-lib-devel \
+          libdecor-devel \
+          libXcursor-devel \
+          libXext-devel \
+          libXi-devel \
+          libXrandr-devel \
+          libXScrnSaver-devel \
+          libxkbcommon-devel \
+          mesa-libGL-devel \
+          nasm \
+          ninja-build \
+          pipewire-devel \
+          pkgconf-pkg-config \
+          pulseaudio-libs-devel \
+          wayland-devel \
+          wget
+
+    - name: Resolve Dep Versions
+      run: |
+        SDL2_TAG=$(git ls-remote --tags https://github.com/libsdl-org/SDL.git 'refs/tags/release-2.*' \
+          | sed 's|.*refs/tags/release-||' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+        if [ -z "$SDL2_TAG" ]; then
+          SDL2_TAG="2.32.10" # Fallback to a known stable version if tag retrieval fails
+        fi
+        echo "SDL2_TAG=$SDL2_TAG" >> "$GITHUB_ENV"
+
+        OPENMPT_TAG=$(git ls-remote --tags https://github.com/OpenMPT/openmpt.git 'refs/tags/libopenmpt-*' \
+          | sed 's|.*refs/tags/libopenmpt-||' \
+          | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+        if [ -z "$OPENMPT_TAG" ]; then
+          OPENMPT_TAG="0.8.4" # Fallback to a known stable version if tag retrieval fails
+        fi
+        echo "OPENMPT_TAG=$OPENMPT_TAG" >> "$GITHUB_ENV"
+
+        LIBPNG_VERSION=$(git ls-remote --tags https://github.com/pnggroup/libpng.git 'refs/tags/v1.6.*' \
+          | sed 's|.*refs/tags/v||' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+        if [ -z "$LIBPNG_VERSION" ]; then
+          LIBPNG_VERSION="1.6.58" # Fallback to a known stable version if tag retrieval fails
+        fi
+        echo "LIBPNG_VERSION=$LIBPNG_VERSION" >> "$GITHUB_ENV"
+
+        JPEG_TURBO_VERSION=$(git ls-remote --tags https://github.com/libjpeg-turbo/libjpeg-turbo.git 'refs/tags/[0-9]*' \
+          | sed 's|.*refs/tags/||' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+        if [ -z "$JPEG_TURBO_VERSION" ]; then
+          JPEG_TURBO_VERSION="3.1.3" # Fallback to a known stable version if tag retrieval fails
+        fi
+        echo "JPEG_TURBO_VERSION=$JPEG_TURBO_VERSION" >> "$GITHUB_ENV"
+
+        echo "Using SDL2 $SDL2_TAG, libopenmpt $OPENMPT_TAG,"
+        echo "libpng $LIBPNG_VERSION, libjpeg-turbo $JPEG_TURBO_VERSION"
+
+    - name: Build SDL2 (static)
+      if: steps.deps-cache.outputs.cache-hit != 'true'
+      run: |
+        wget -q "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_TAG}/SDL2-${SDL2_TAG}.tar.gz"
+        tar xf "SDL2-${SDL2_TAG}.tar.gz"
+        # Use SDL's built-in iconv for wider glibc compatibility, including glibc installs without iconv
+        cmake -G Ninja -B build-sdl2 \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX="$HOME/pvz-deps" \
+          -DSDL_SHARED=OFF \
+          -DSDL_STATIC=ON \
+          -DSDL_TEST=OFF \
+          -DSDL_KMSDRM=OFF \
+          -DSDL_JACK=OFF \
+          -DSDL_SNDIO=OFF \
+          -DSDL_DBUS=OFF \
+          -DSDL_IBUS=OFF \
+          -DSDL_LIBUDEV=OFF \
+          -DSDL_LIBSAMPLERATE=OFF \
+          -DSDL_SYSTEM_ICONV=OFF \
+          "SDL2-${SDL2_TAG}"
+        cmake --build build-sdl2 -j$(nproc)
+        cmake --install build-sdl2
+
+    - name: Build zlib
+      run: |
+        git clone --depth=1 https://github.com/madler/zlib.git zlib-src
+        cd zlib-src
+        ./configure \
+          --prefix="$HOME/pvz-deps" \
+          --static
+        make -j$(nproc)
+        make install
+
+    - name: Build Ogg
+      run: |
+        git clone --depth=1 https://github.com/xiph/ogg.git libogg-src
+        cd libogg-src
+        ./autogen.sh
+        ./configure \
+          --prefix="$HOME/pvz-deps" \
+          --disable-shared \
+          --enable-static
+        make -j$(nproc)
+        make install
+
+    - name: Build Vorbis
+      run: |
+        git clone --depth=1 https://github.com/xiph/vorbis.git libvorbis-src
+        cd libvorbis-src
+        ./autogen.sh
+        ./configure \
+          --prefix="$HOME/pvz-deps" \
+          --disable-shared \
+          --enable-static \
+          --with-ogg="$HOME/pvz-deps"
+        make -j$(nproc)
+        make install
+
+    - name: Build mpg123
+      run: |
+        wget -q https://www.mpg123.de/download/mpg123-1.32.10.tar.bz2
+        tar -xf mpg123-1.32.10.tar.bz2
+        cd mpg123-1.32.10
+        ./configure \
+          --prefix="$HOME/pvz-deps" \
+          --disable-shared \
+          --enable-static
+        make -j$(nproc)
+        make install
+
+    - name: Build libopenmpt (static)
+      run: |
+        git clone --depth=1 --branch "libopenmpt-${OPENMPT_TAG}" https://github.com/OpenMPT/openmpt.git libopenmpt-src
+        cd libopenmpt-src
+        make CONFIG=gcc \
+          STATIC_LIB=1 SHARED_LIB=0 \
+          EXAMPLES=0 OPENMPT123=0 TEST=0 \
+          NO_ZLIB=1 NO_MPG123=1 NO_OGG=1 NO_VORBIS=1 NO_VORBISFILE=1 \
+          NO_PORTAUDIO=1 NO_PORTAUDIOCPP=1 NO_PULSEAUDIO=1 \
+          NO_SDL2=1 NO_FLAC=1 NO_SNDFILE=1 \
+          -j$(nproc)
+        make CONFIG=gcc \
+          STATIC_LIB=1 SHARED_LIB=0 \
+          EXAMPLES=0 OPENMPT123=0 TEST=0 \
+          PREFIX="$HOME/pvz-deps" install
+
+    - name: Build Codec Libraries (static)
+      run: |
+        git clone --depth=1 --branch "v${LIBPNG_VERSION}" https://github.com/pnggroup/libpng.git libpng-src
+        cmake -G Ninja -B build-libpng libpng-src \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX="$HOME/pvz-deps" \
+          -DPNG_SHARED=OFF \
+          -DPNG_STATIC=ON \
+          -DPNG_EXECUTABLES=OFF \
+          -DPNG_TESTS=OFF
+        cmake --build build-libpng -j$(nproc)
+        cmake --install build-libpng
+
+        git clone --depth=1 --branch "${JPEG_TURBO_VERSION}" https://github.com/libjpeg-turbo/libjpeg-turbo.git libjpeg-turbo-src
+        cmake -G Ninja -B build-jpeg libjpeg-turbo-src \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX="$HOME/pvz-deps" \
+          -DENABLE_SHARED=OFF \
+          -DENABLE_STATIC=ON \
+          -DWITH_TURBOJPEG=OFF
+        cmake --build build-jpeg -j$(nproc)
+        cmake --install build-jpeg
+
+    - name: Build PvZ-Portable
+      run: |
+        find ~/pvz-deps | sort
+        cmake -G Ninja -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_STATIC=ON \
+          -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" \
+          -DCMAKE_PREFIX_PATH="$HOME/pvz-deps"
+        cmake --build build
+
+        mkdir -p dist
+        strip build/zuma-portable
+        cp build/zuma-portable dist/zuma-portable-linux-${{ matrix.arch }}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: zuma-portable-linux-${{ matrix.arch }}
         path: dist/
 
