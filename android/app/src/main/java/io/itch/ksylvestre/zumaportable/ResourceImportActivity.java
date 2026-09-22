@@ -42,6 +42,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -163,29 +164,33 @@ public class ResourceImportActivity extends AppCompatActivity {
                  ZipInputStream zis = new ZipInputStream(is)) {
                 ZipEntry entry;
                 while ((entry = zis.getNextEntry()) != null) {
-                    if (entry.isDirectory()) {
-                        zis.closeEntry();
-                        continue;
-                    }
-                    String name = stripCommonPrefix(entry.getName());
-                    if (name == null) { zis.closeEntry(); continue; }
+                    if (!entry.isDirectory()) {
+						String name = getResourcePath(entry.getName());
+						if (name != null) {
+							File outFile = new File(gameDir, name);
+							File parent = outFile.getParentFile();
+							if (parent != null && !parent.exists()) parent.mkdirs();
 
-                    File outFile = new File(gameDir, name);
-                    File parent = outFile.getParentFile();
-                    if (parent != null && !parent.exists()) parent.mkdirs();
-
-                    try (OutputStream os = new BufferedOutputStream(new FileOutputStream(outFile), BUFFER_SIZE)) {
-                        byte[] buf = new byte[BUFFER_SIZE];
-                        int len;
-                        while ((len = zis.read(buf)) > 0) os.write(buf, 0, len);
+							try (OutputStream os = new BufferedOutputStream(new FileOutputStream(outFile), BUFFER_SIZE)) {
+								byte[] buf = new byte[BUFFER_SIZE];
+								int len;
+								while ((len = zis.read(buf)) > 0) os.write(buf, 0, len);
+							}
+						}
                     }
                     zis.closeEntry();
                 }
+
+				File resourcesFile = new File(gameDir, "properties/resources.xml");
+				if (!resourcesFile.isFile()) {
+					throw new Exception("Missing properties/resources.xml");
+				}
+				
                 runOnUiThread(() -> {
                     Toast.makeText(this, R.string.import_success, Toast.LENGTH_SHORT).show();
                     refreshStatus();
                 });
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "ZIP import failed", e);
                 runOnUiThread(() -> {
                     Toast.makeText(this, getString(R.string.import_failed, e.getMessage()), Toast.LENGTH_LONG).show();
@@ -198,29 +203,29 @@ public class ResourceImportActivity extends AppCompatActivity {
     }
 
     /**
-     * Strips a single wrapper directory from zip entry paths when the entry
-     * doesn't start with a known top-level name (e.g. "PvZ/main.pak" -> "main.pak").
+     * Extract relative game directory from full path
      */
-    private String stripCommonPrefix(String name) {
-        name = name.replace('\\', '/').replaceAll("^/+", "");
-
-        if (isKnownTopLevel(name)) return name;
-
-        // Strip one leading directory component
-        int slash = name.indexOf('/');
-        if (slash > 0 && slash < name.length() - 1) {
-            return name.substring(slash + 1);
-        }
-
-        return name;
-    }
-
-    private static boolean isKnownTopLevel(String name) {
-        return name.startsWith("main.pak") || name.startsWith("properties/") ||
-               name.startsWith("Properties/") || name.startsWith("data/") ||
-               name.startsWith("images/") || name.startsWith("particles/") ||
-               name.startsWith("reanim/") || name.startsWith("sounds/") ||
-               name.startsWith("compiled/");
+    private String getResourcePath(String name) {
+		String result = null;
+		if (!name.startsWith("__MACOSX")) {
+			String[] relpaths = {
+				"properties/",
+				"fonts/",
+				"images/",
+				"levels/",
+				"music/",
+				"sounds/"
+			};
+			String nameLower = name.toLowerCase(Locale.ROOT);
+			for (String str : relpaths) {
+				int i = nameLower.indexOf(str);
+				if (i != -1) {
+					result = name.substring(i);
+					break;
+				}
+			}
+		}
+		return result;
     }
 
     private void importFromDirectory(Uri treeUri) {
