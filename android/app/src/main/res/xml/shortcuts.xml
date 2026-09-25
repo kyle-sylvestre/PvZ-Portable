@@ -8,7 +8,7 @@
         android:shortcutLongLabel="@string/shortcut_manage_data_long">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="io.itch.ksylvestre.zumaportable"
-            android:targetClass="io.itch.ksyvlestre.zumaportable.ResourceImportActivity" />
+            android:targetPackage="io.itch.ksylvestre.insaniquariumportable"
+            android:targetClass="io.itch.ksyvlestre.insaniquariumportable.ResourceImportActivity" />
     </shortcut>
 </shortcuts>
