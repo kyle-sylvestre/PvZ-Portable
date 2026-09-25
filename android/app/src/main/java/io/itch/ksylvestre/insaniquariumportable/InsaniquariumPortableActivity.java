@@ -19,7 +19,7 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.itch.ksylvestre.zumaportable;
+package io.itch.ksylvestre.insaniquariumportable;
 
 import android.content.Intent;
 import android.os.Build;
@@ -35,8 +35,8 @@ import org.libsdl.app.SDLActivity;
 
 import java.io.File;
 
-public class ZumaPortableActivity extends SDLActivity {
-    private static final String TAG = "ZumaPortable";
+public class InsaniquariumPortableActivity extends SDLActivity {
+    private static final String TAG = "InsaniquariumPortable";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

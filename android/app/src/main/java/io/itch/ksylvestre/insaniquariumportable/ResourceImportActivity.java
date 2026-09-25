@@ -19,7 +19,7 @@
  * along with PvZ-Portable. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package io.itch.ksylvestre.zumaportable;
+package io.itch.ksylvestre.insaniquariumportable;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -113,7 +113,7 @@ public class ResourceImportActivity extends AppCompatActivity {
             dirPicker.launch(null)
         );
         btnExportSave.setOnClickListener(v ->
-            saveExporter.launch("zuma-portable-savedata.zip")
+            saveExporter.launch("insaniquarium-portable-savedata.zip")
         );
         btnImportSaveZip.setOnClickListener(v ->
             saveZipImporter.launch(new String[]{"application/zip", "application/x-zip-compressed"})
@@ -152,7 +152,7 @@ public class ResourceImportActivity extends AppCompatActivity {
     }
 
     private void launchGame() {
-        Intent intent = new Intent(this, ZumaPortableActivity.class);
+        Intent intent = new Intent(this, InsaniquariumPortableActivity.class);
         startActivity(intent);
         finish();
     }
@@ -209,12 +209,12 @@ public class ResourceImportActivity extends AppCompatActivity {
 		String result = null;
 		if (!name.startsWith("__MACOSX")) {
 			String[] relpaths = {
-				"properties/",
-				"fonts/",
+				"data/",
+				"fishsongs/",
 				"images/",
-				"levels/",
 				"music/",
-				"sounds/"
+				"properties/",
+				"sounds/",
 			};
 			String nameLower = name.toLowerCase(Locale.ROOT);
 			for (String str : relpaths) {
