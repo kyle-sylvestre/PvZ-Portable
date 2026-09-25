@@ -38,12 +38,13 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: zuma
+          ref: insaniquarium
 
       - uses: actions/checkout@v6
         with:
-          repository: kyle-sylvestre/CircleShootApp
-          path: src/CircleShoot
+          repository: kyle-sylvestre/WinFish
+          path: src/WinFish
+          ref: develop
 
       - name: Create flat SexyAppFramework
         shell: bash
@@ -62,7 +63,7 @@ jobs:
           cd openmpt
           make CONFIG=gcc SHARED_LIB=0 DYNLINK=0 EXAMPLES=0 OPENMPT123=0 TEST=0 PREFIX=$PORTLIBS_PREFIX install 
 
-      - name: Compile Zuma-Portable for Switch
+      - name: Compile Insaniquarium-Portable for Switch
         shell: bash
         run: |
           source $DEVKITPRO/switchvars.sh
@@ -72,15 +73,15 @@ jobs:
           cd build
           aarch64-none-elf-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-O2
           make
-          aarch64-none-elf-strip zuma-portable.elf
+          aarch64-none-elf-strip insaniquarium-portable.elf
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: zuma-portable-switch
+          name: insaniquarium-portable-switch
           path: |
-            ./build/zuma-portable.nro
-            ./build/zuma-portable.elf
+            ./build/insaniquarium-portable.nro
+            ./build/insaniquarium-portable.elf
 
   build-windows-msvc-x86-release:
     if: inputs.build_windows_release
@@ -90,12 +91,13 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-        ref: zuma
+        ref: insaniquarium
 
     - uses: actions/checkout@v6
       with:
-        repository: kyle-sylvestre/CircleShootApp
-        path: src/CircleShoot
+        repository: kyle-sylvestre/WinFish
+        path: src/WinFish
+        ref: develop
 
     - name: Create flat SexyAppFramework
       shell: bash
@@ -121,21 +123,21 @@ jobs:
       with:
         vcpkgJsonGlob: vcpkg.json
 
-    - name: Compile Zuma-Portable for Windows (MSVC)
+    - name: Compile Insaniquarium-Portable for Windows (MSVC)
       shell: pwsh
       run: |
         cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE=Release -DCONSOLE=OFF -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x86-windows-static
         cmake --build build
 
         New-Item -ItemType Directory -Force -Path dist | Out-Null
-        New-Item -ItemType Directory -Force -Path dist/zuma-portable | Out-Null
-        Copy-Item build/zuma-portable.exe dist/zuma-portable
-        Copy-Item zuma/LICENSE.txt dist/zuma-portable
+        New-Item -ItemType Directory -Force -Path dist/insaniquarium-portable | Out-Null
+        Copy-Item build/insaniquarium-portable.exe dist/insaniquarium-portable
+        Copy-Item zuma/LICENSE.txt dist/insaniquarium-portable
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
       with:
-        name: zuma-portable-windows-msvc-x86-release
+        name: insaniquarium-portable-windows-msvc-x86-release
         path: dist/
 
 
@@ -147,12 +149,13 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-        ref: zuma
+        ref: insaniquarium
 
     - uses: actions/checkout@v6
       with:
-        repository: kyle-sylvestre/CircleShootApp
-        path: src/CircleShoot
+        repository: kyle-sylvestre/WinFish
+        path: src/WinFish
+        ref: develop
 
     - name: Create flat SexyAppFramework
       shell: bash
@@ -178,22 +181,22 @@ jobs:
       with:
         vcpkgJsonGlob: vcpkg.json
 
-    - name: Compile Zuma-Portable for Windows (MSVC)
+    - name: Compile Insaniquarium-Portable for Windows (MSVC)
       shell: pwsh
       run: |
         cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE=Debug -DCONSOLE=OFF -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x86-windows-static
         cmake --build build
 
         New-Item -ItemType Directory -Force -Path dist | Out-Null
-        New-Item -ItemType Directory -Force -Path dist/zuma-portable | Out-Null
-        Copy-Item build/zuma-portable.exe dist/zuma-portable
-        Copy-Item build/zuma-portable.pdb dist/zuma-portable
-        Copy-Item zuma/LICENSE.txt dist/zuma-portable
+        New-Item -ItemType Directory -Force -Path dist/insaniquarium-portable | Out-Null
+        Copy-Item build/insaniquarium-portable.exe dist/insaniquarium-portable
+        Copy-Item build/insaniquarium-portable.pdb dist/insaniquarium-portable
+        Copy-Item zuma/LICENSE.txt dist/insaniquarium-portable
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
       with:
-        name: zuma-portable-windows-msvc-x86-debug
+        name: insaniquarium-portable-windows-msvc-x86-debug
         path: dist/
   build-android:
     if: inputs.build_android_release
@@ -203,12 +206,13 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-        ref: zuma
+        ref: insaniquarium
 
     - uses: actions/checkout@v6
       with:
-        repository: kyle-sylvestre/CircleShootApp
-        path: src/CircleShoot
+        repository: kyle-sylvestre/WinFish
+        path: src/WinFish
+        ref: develop
 
     - name: Create flat SexyAppFramework
       shell: bash
@@ -337,12 +341,12 @@ jobs:
     - name: Copy APK
       run: |
         mkdir -p dist
-        find android -name "*.apk" -path "*/release/*" -exec cp {} dist/zuma-portable-android.apk \;
+        find android -name "*.apk" -path "*/release/*" -exec cp {} dist/insaniquarium-portable-android.apk \;
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
       with:
-        name: zuma-portable-android
+        name: insaniquarium-portable-android
         path: dist/
 
   build-linux-static:
@@ -367,12 +371,13 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-        ref: zuma
+        ref: insaniquarium
 
     - uses: actions/checkout@v6
       with:
-        repository: kyle-sylvestre/CircleShootApp
-        path: src/CircleShoot
+        repository: kyle-sylvestre/WinFish
+        path: src/WinFish
+        ref: develop
 
     - name: Create flat SexyAppFramework
       shell: bash
@@ -557,12 +562,12 @@ jobs:
         cmake --build build
 
         mkdir -p dist
-        strip build/zuma-portable
-        cp build/zuma-portable dist/zuma-portable-linux-${{ matrix.arch }}
+        strip build/insaniquarium-portable
+        cp build/insaniquarium-portable dist/insaniquarium-portable-linux-${{ matrix.arch }}
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
       with:
-        name: zuma-portable-linux-${{ matrix.arch }}
+        name: insaniquarium-portable-linux-${{ matrix.arch }}
         path: dist/
 
