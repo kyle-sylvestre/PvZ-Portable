@@ -31,7 +31,7 @@ if(MSVC)
 endif()
 
 file(GLOB SOURCES
-	src/CircleShoot/source/CircleShoot/*.cpp
+	src/WinFish/source/WinFish/*.cpp
 	src/SexyAppFramework/*.cpp
 	src/SexyAppFramework/graphics/*.cpp
 	src/SexyAppFramework/imagelib/*.cpp
@@ -211,14 +211,11 @@ target_compile_definitions(pvz-portable PRIVATE
 	$<$<BOOL:${DO_FIX_BUGS}>:DO_FIX_BUGS>
 )
 
-# disable zuma debug commands
-target_compile_definitions(pvz-portable PRIVATE RELEASEFINAL)
-
 # use directory picker
-set_property(TARGET pvz-portable PROPERTY OUTPUT_NAME zuma-portable)
+set_property(TARGET pvz-portable PROPERTY OUTPUT_NAME insaniquarium-portable)
 if (APPLE AND NOT IOS)
 	set_property(SOURCE 
-		${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Main.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/src/WinFish/source/WinFish/Window.cpp
 		APPEND_STRING PROPERTY COMPILE_FLAGS " -x objective-c++ "
 	)
 	target_link_libraries(pvz-portable PRIVATE
@@ -227,11 +224,11 @@ if (APPLE AND NOT IOS)
 	)
 	set_target_properties(pvz-portable PROPERTIES
 		MACOSX_BUNDLE TRUE
-		MACOSX_BUNDLE_GUI_IDENTIFIER "io.itch.ksylvestre.zuma-portable"
-		MACOSX_BUNDLE_BUNDLE_NAME "Zuma Portable"
+		MACOSX_BUNDLE_GUI_IDENTIFIER "io.itch.ksylvestre.insaniquarium-portable"
+		MACOSX_BUNDLE_BUNDLE_NAME "Insaniquarium Portable"
 		MACOSX_BUNDLE_BUNDLE_VERSION "0.1"
 		MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1"
-		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/zuma/Info.plist.in"
+		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/insaniquarium/Info.plist.in"
 	)
 endif()
 
@@ -290,13 +287,13 @@ if (WIN32)
 		target_compile_options(pvz-portable PRIVATE /utf-8)
 	endif()
 
-	target_sources(pvz-portable PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Zuma.rc)
+	target_sources(pvz-portable PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/WinFish/source/WinFish/Insaniquarium.rc)
 
 	set_source_files_properties(
-		${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Zuma.rc
+		${CMAKE_CURRENT_SOURCE_DIR}/src/WinFish/source/WinFish/Insaniquarium.rc
 		PROPERTIES
-			COMPILE_DEFINITIONS "APP_ICON_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Zuma.ico\""
-			OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/CircleShoot/source/CircleShoot/Zuma.ico"
+		COMPILE_DEFINITIONS "APP_ICON_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/src/WinFish/source/WinFish/Insaniquarium.ico\""
+		OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/WinFish/source/WinFish/Insaniquarium.ico"
 	)
 
 	target_link_libraries(pvz-portable PRIVATE ws2_32 user32 gdi32 winmm imm32 shlwapi)
@@ -313,7 +310,7 @@ elseif (NINTENDO_SWITCH)
 	target_link_libraries(pvz-portable PRIVATE GLESv2 EGL glapi drm_nouveau)
 
 	nx_generate_nacp(pvz-portable.nacp
-		NAME "Zuma Portable"
+		NAME "Insaniquarium Portable"
 		AUTHOR "ksylvestre"
 		VERSION "0.1"
 	)

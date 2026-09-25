@@ -7,15 +7,15 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleExecutable</key>
-    <string>zuma-portable</string>
+    <string>insaniquarium-portable</string>
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
-    <string>io.itch.ksylvestre.zuma-portable</string>
+    <string>io.itch.ksylvestre.insaniquarium-portable</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Zuma Portable</string>
+    <string>Insaniquarium Portable</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
