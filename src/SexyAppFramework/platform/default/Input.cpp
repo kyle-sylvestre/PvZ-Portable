@@ -367,7 +367,34 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 	SDL_Event event;
 	if (SDL_PollEvent(&event))
 	{
-		SDL_Log("EVENT:%X %s", event.type, SDL_GetEventName(event.type));
+		// simulate multitouch events
+		//if ((event.type == SDL_KEYDOWN && !event.key.repeat) || event.type == SDL_KEYUP)
+		//{
+		//	SDL_Point points[] = {
+		//		45, 27,
+		//		310, 133,
+		//	};
+		//	int point_idx = (event.key.keysym.sym == SDLK_a) ? 0 :
+		//	                (event.key.keysym.sym == SDLK_s) ? 1 : -1;
+		//	if (point_idx != -1)
+		//	{
+		//		SDL_Point p = points[point_idx];
+		//		int ww, wh;
+		//		SDL_GL_GetDrawableSize((SDL_Window*)mWindow, &ww, &wh);
+		//		SDL_Event ev = {};
+		//		ev.type = (event.type == SDL_KEYDOWN) ? SDL_FINGERDOWN : SDL_FINGERUP;
+		//		ev.tfinger.touchId = point_idx;
+		//		ev.tfinger.fingerId = point_idx;
+		//		ev.tfinger.x = (float)p.x / ww;
+		//		ev.tfinger.y = (float)p.y / wh;
+		//		ev.tfinger.dx = 0.0f;
+		//		ev.tfinger.dy = 0.0f;
+		//		ev.tfinger.pressure = 1.0f;
+		//		SDL_PushEvent(&ev);
+		//	}
+		//}
+
+		//SDL_Log("EVENT:%04X", event.type);
         HandleEvent(&event);
 		switch(event.type)
 		{
@@ -429,6 +456,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 				if (!mMouseIn)
 					mMouseIn = true;
 
+				//SDL_Log("MOTION: %d,%d", event.motion.x, event.motion.y);
 				int x = event.motion.x;
 				int y = event.motion.y;
 				mWidgetManager->RemapMouse(x, y);
@@ -503,22 +531,42 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 				mWidgetManager->KeyChar((char)event.text.text[0]);
 				break;
 
-			//case SDL_FINGERDOWN:
-			//case SDL_FINGERUP:
-			//{
-			//	int x = (int)(event.tfinger.x * mGLInterface->mPresentationRect.mX);
-			//	int y = (int)(event.tfinger.y * mGLInterface->mPresentationRect.mY);
-			//	mWidgetManager->RemapMouse(x, y);
-			//	if (event.type == SDL_FINGERDOWN)
-			//	{
-			//		mWidgetManager->MouseDown(x, y, 1);
-			//	}
-			//	else
-			//	{
-			//		mWidgetManager->MouseUp(x, y, 1);
-			//	}
-			//	break;
-			//}
+			case SDL_FINGERUP:
+			case SDL_FINGERDOWN:
+			case SDL_FINGERMOTION:
+			{
+				//const char *name = (event.type == SDL_FINGERUP) ? "FINGERUP" :
+				//                   (event.type == SDL_FINGERDOWN) ? "FINGERDOWN" : "FINGERMOTION";
+				//SDL_Log("%s FID:%lld TID:%lld", name, event.tfinger.fingerId, event.tfinger.touchId);
+				int aWindowWidth, aWindowHeight;
+				SDL_GL_GetDrawableSize((SDL_Window*)mWindow, &aWindowWidth, &aWindowHeight);
+				int x = (int)(event.tfinger.x * aWindowWidth);
+				int y = (int)(event.tfinger.y * aWindowHeight);
+				Finger *f = mWidgetManager->GetFinger(event.tfinger.fingerId);
+				if (event.type == SDL_FINGERDOWN)
+				{
+					mWidgetManager->RemapMouse(x, y);
+					mWidgetManager->FingerMove(f, x, y);
+					mWidgetManager->FingerDown(f, x, y, 1);
+				}
+				else if (event.type == SDL_FINGERUP)
+				{
+					mWidgetManager->RemapMouse(x, y);
+					mWidgetManager->FingerMove(f, x, y);
+					mWidgetManager->FingerUp(f, x, y, 1);
+                    if (f->mOverWidget)
+                    {
+                        mWidgetManager->MouseLeave(f->mOverWidget);  
+                    }
+					*f = {};
+				}
+				else if (event.type == SDL_FINGERMOTION)
+				{
+					mWidgetManager->RemapMouse(x, y);
+					mWidgetManager->FingerMove(f, x, y);
+				}
+				break;
+			}
 		}
 	}
 

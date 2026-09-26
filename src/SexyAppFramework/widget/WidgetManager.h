@@ -63,9 +63,22 @@ typedef std::list<PreModalInfo> PreModalInfoList;
 
 typedef std::vector<std::pair<Widget*, int> > DeferredOverlayVector;
 
+class Finger
+{
+public:
+    bool                    mUsed;
+    SDL_FingerID            mID;
+    Widget*                 mLastDownWidget;
+    Widget*                 mOverWidget;
+	int						mLastMouseX;
+	int						mLastMouseY;
+    int                     mDownButtons;
+};
+
 class WidgetManager : public WidgetContainer
 {
-public:	
+public:
+    Finger                  mFingers[32];
 	Widget*					mDefaultTab;
 	
 	Graphics*				mCurG;
@@ -79,8 +92,8 @@ public:
 	
 	bool					mHasFocus;
 	Widget*					mFocusWidget;
-	Widget*					mLastDownWidget;
-	Widget*					mOverWidget;
+	//Widget*					mLastDownWidget;
+	//Widget*					mOverWidget;
 	Widget*					mBaseModalWidget;
 	FlagsMod				mLostFocusFlagsMod;
 	FlagsMod				mBelowModalFlagsMod;
@@ -91,7 +104,7 @@ public:
 	bool					mMouseIn;
 	int						mLastMouseX;
 	int						mLastMouseY;
-	int						mDownButtons;
+	//int						mDownButtons;
 	int						mActualDownButtons;
 	int						mLastInputUpdateCnt;
 	
@@ -125,7 +138,7 @@ public:
 	void					LostFocus();	
 	void					InitModalFlags(ModalFlags* theModalFlags);
 	void					DrawWidgetsTo(Graphics* g);
-	void					DoMouseUps(Widget* theWidget, ulong theDownCode);	
+	//void					DoMouseUps(Widget* theWidget, ulong theDownCode);
 	void					DoMouseUps();
 	void					DeferOverlay(Widget* theWidget, int thePriority);
 	void					FlushDeferredOverlayWidgets(int theMaxPriority);
@@ -151,6 +164,15 @@ public:
 	bool					IsLeftButtonDown();
 	bool					IsMiddleButtonDown();
 	bool					IsRightButtonDown();
+    
+	bool					FingerValid(Finger *f);
+    Finger*                 GetFinger(SDL_FingerID theFingerID);
+    void                    FingerPosition(Finger *f, int x, int y);
+    bool                    FingerUp(Finger *f, int x, int y, int theClickCount);
+    bool                    FingerDown(Finger *f, int x, int y, int theClickCount);
+    bool                    FingerMove(Finger *f, int x, int y);
+    bool                    FingerDrag(Finger *f, int x, int y);
+    void                    DoFingerUps(Finger *f, Widget* theWidget, ulong theDownCode);    
 };
 
 }

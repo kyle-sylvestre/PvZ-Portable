@@ -47,8 +47,6 @@ WidgetManager::WidgetManager(SexyAppBase* theApp)
 	mLastHadTransients = false;
 	mPopupCommandWidget = nullptr;
 	mFocusWidget = nullptr;
-	mLastDownWidget = nullptr;
-	mOverWidget = nullptr;
 	mBaseModalWidget = nullptr;
 	mDefaultBelowModalFlagsMod.mRemoveFlags = WIDGETFLAGS_ALLOW_MOUSE | WIDGETFLAGS_ALLOW_FOCUS;	
 	mWidth = 0;
@@ -56,13 +54,15 @@ WidgetManager::WidgetManager(SexyAppBase* theApp)
 	mHasFocus = true;
 	mUpdateCnt = 0;
 	mLastDownButtonId = 0;
-	mDownButtons = 0;
 	mActualDownButtons = 0;
 	mWidgetFlags = WIDGETFLAGS_UPDATE | WIDGETFLAGS_DRAW | WIDGETFLAGS_CLIP |
 		WIDGETFLAGS_ALLOW_MOUSE | WIDGETFLAGS_ALLOW_FOCUS;
 
 	for (int i = 0; i < 0xFF; i++)
 		mKeyDown[i] = false;
+    
+    for (Finger &aIter : mFingers)
+        aIter = {};
 }
 
 WidgetManager::~WidgetManager()
@@ -77,20 +77,26 @@ void WidgetManager::FreeResources()
 
 void WidgetManager::DisableWidget(Widget* theWidget)
 {
-	if (mOverWidget == theWidget)
-	{
-		Widget* aOverWidget = mOverWidget;
-		mOverWidget = nullptr;
-		MouseLeave(aOverWidget);
-	}
-	
-	if (mLastDownWidget	== theWidget)
-	{
-		Widget* aLastDownWidget = mLastDownWidget;
-		mLastDownWidget = nullptr;
-		DoMouseUps(aLastDownWidget, mDownButtons);
-		mDownButtons = 0;		
-	}
+    for (Finger &aIter : mFingers)
+    {
+		if (!FingerValid(&aIter))
+			continue;
+
+        if (aIter.mOverWidget == theWidget)
+        {
+            Widget* aOverWidget = aIter.mOverWidget;
+            aIter.mOverWidget = nullptr;
+            MouseLeave(aOverWidget);
+        }
+        
+        if (aIter.mLastDownWidget == theWidget)
+        {
+            Widget* aLastDownWidget = aIter.mLastDownWidget;
+            aIter.mLastDownWidget = nullptr;
+            DoFingerUps(&aIter, aLastDownWidget, aIter.mDownButtons);
+            aIter.mDownButtons = 0;
+        }
+    }
 	
 	if (mFocusWidget == theWidget)
 	{
@@ -139,12 +145,18 @@ bool WidgetManager::IsRightButtonDown()
 
 void WidgetManager::DoMouseUps()
 {
-	if (mLastDownWidget!=nullptr && mDownButtons!=0)
-	{
-		DoMouseUps(mLastDownWidget, mDownButtons);
-		mDownButtons = 0;
-		mLastDownWidget = nullptr;
-	}
+    for (Finger &aIter : mFingers)
+    {
+		if (!FingerValid(&aIter))
+			continue;
+
+        if (aIter.mLastDownWidget!=nullptr && aIter.mDownButtons!=0)
+        {
+            DoFingerUps(&aIter, aIter.mLastDownWidget, aIter.mDownButtons);
+            aIter.mLastDownWidget = nullptr;
+            aIter.mDownButtons = 0;
+        }
+    }
 }
 
 void WidgetManager::DeferOverlay(Widget* theWidget, int thePriority)
@@ -202,7 +214,7 @@ void WidgetManager::FlushDeferredOverlayWidgets(int theMaxPriority)
 	}
 }
 
-void WidgetManager::DoMouseUps(Widget* theWidget, ulong theDownCode)
+void WidgetManager::DoFingerUps(Finger *f, Widget* theWidget, ulong theDownCode)
 {
 	int aClickCountTable[3] = { 1,-1, 3 };
 	for (int i = 0; i < 3; i++)
@@ -210,7 +222,7 @@ void WidgetManager::DoMouseUps(Widget* theWidget, ulong theDownCode)
 		if ((theDownCode & (1 << i)) != 0)
 		{
 			theWidget->mIsDown = false;
-			theWidget->MouseUp(mLastMouseX - theWidget->mX, mLastMouseY - theWidget->mY, aClickCountTable[i]);
+			theWidget->MouseUp(f->mLastMouseX - theWidget->mX, f->mLastMouseY - theWidget->mY, aClickCountTable[i]);
 		}
 	}
 }
@@ -244,23 +256,29 @@ void WidgetManager::SetBaseModal(Widget* theWidget, const FlagsMod& theBelowFlag
 	mBaseModalWidget = theWidget;
 	mBelowModalFlagsMod = theBelowFlagsMod;
 	
-	if ((mOverWidget != nullptr) && (mBelowModalFlagsMod.mRemoveFlags & WIDGETFLAGS_ALLOW_MOUSE) && 
-		(IsBelow(mOverWidget, mBaseModalWidget)))
-	{
-		Widget* aWidget = mOverWidget;
-		mOverWidget = nullptr;
-		MouseLeave(aWidget);		
-	}
-	
-	if ((mLastDownWidget != nullptr) && (mBelowModalFlagsMod.mRemoveFlags & WIDGETFLAGS_ALLOW_MOUSE) && 
-		(IsBelow(mLastDownWidget, mBaseModalWidget)))
-	{
-		Widget* aWidget = mLastDownWidget;
-		int aDownButtons = mDownButtons;
-		mDownButtons = 0;		
-		mLastDownWidget = nullptr;
-		DoMouseUps(aWidget, aDownButtons);		
-	}
+    for (Finger &aIter : mFingers)
+    {
+		if (!FingerValid(&aIter))
+			continue;
+
+        if ((aIter.mOverWidget != nullptr) && (mBelowModalFlagsMod.mRemoveFlags & WIDGETFLAGS_ALLOW_MOUSE) &&
+            (IsBelow(aIter.mOverWidget, mBaseModalWidget)))
+        {
+            Widget* aWidget = aIter.mOverWidget;
+            aIter.mOverWidget = nullptr;
+            MouseLeave(aWidget);
+        }
+        
+        if ((aIter.mLastDownWidget != nullptr) && (mBelowModalFlagsMod.mRemoveFlags & WIDGETFLAGS_ALLOW_MOUSE) &&
+            (IsBelow(aIter.mLastDownWidget, mBaseModalWidget)))
+        {
+            Widget* aWidget = aIter.mLastDownWidget;
+            int aDownButtons = aIter.mDownButtons;
+            aIter.mDownButtons = 0;
+            aIter.mLastDownWidget = nullptr;
+            DoFingerUps(&aIter, aWidget, aDownButtons);
+        }
+    }
 	
 	if ((mFocusWidget != nullptr) && (mBelowModalFlagsMod.mRemoveFlags & WIDGETFLAGS_ALLOW_FOCUS) && 
 		(IsBelow(mFocusWidget, mBaseModalWidget)))
@@ -537,209 +555,67 @@ void WidgetManager::RemovePopupCommandWidget()
 
 void WidgetManager::MousePosition(int x, int y)
 {
-
-	int aLastMouseX = mLastMouseX;
-	int aLastMouseY = mLastMouseY;
-
-	mLastMouseX = x;
-	mLastMouseY = y;
-	
-	int aWidgetX;
-	int aWidgetY;
-	Widget* aWidget = GetWidgetAt(x, y, &aWidgetX, &aWidgetY);
-	
-	if (aWidget != mOverWidget)
-	{
-		Widget* aLastOverWidget = mOverWidget;
-		mOverWidget = nullptr;
-
-		if (aLastOverWidget != nullptr)
-			MouseLeave(aLastOverWidget);
-		
-		mOverWidget = aWidget;
-		if (aWidget != nullptr)
-		{
-			MouseEnter(aWidget);
-			aWidget->MouseMove(aWidgetX, aWidgetY);
-		}
-	}
-	else if ((aLastMouseX != x) || (aLastMouseY != y))
-	{
-		if (aWidget != nullptr)
-			aWidget->MouseMove(aWidgetX, aWidgetY);		
-	}
+	Finger *f = GetFinger(0);
+	FingerPosition(f, x, y);
 }
 
 void WidgetManager::RehupMouse()
 {
-	if (mLastDownWidget != nullptr)
-	{
-		if (mOverWidget != nullptr)
-		{						
-			Widget* aWidgetOver = GetWidgetAt(mLastMouseX, mLastMouseY, nullptr, nullptr);
+    for (Finger &aIter : mFingers)
+    {
+		if (!FingerValid(&aIter))
+			continue;
 
-			if (aWidgetOver != mLastDownWidget)
-			{								
-				Widget* anOverWidget = mOverWidget;
-				mOverWidget = nullptr;	
-				MouseLeave(anOverWidget);
-			}
-		}
-	}
-	else if (mMouseIn) 
-		MousePosition(mLastMouseX, mLastMouseY);
+		if (aIter.mLastDownWidget)
+        {
+            if (aIter.mOverWidget)
+            {
+                Widget* aWidgetOver = GetWidgetAt(aIter.mLastMouseX, aIter.mLastMouseY, nullptr, nullptr);
+
+                if (aWidgetOver != aIter.mLastDownWidget)
+                {
+                    Widget* anOverWidget = aIter.mOverWidget;
+                    aIter.mOverWidget = nullptr;
+                    MouseLeave(anOverWidget);
+                }
+            }
+        }
+        else
+        {
+            FingerPosition(&aIter, aIter.mLastMouseX, aIter.mLastMouseY);
+        }
+    }
 }
 
 bool WidgetManager::MouseUp(int x, int y, int theClickCount)
 {	
-	mLastInputUpdateCnt = mUpdateCnt;
-	
-	int aMask;
-	
-	if (theClickCount < 0)
-		aMask = 0x02;
-	else if (theClickCount == 3)
-		aMask = 0x04;
-	else
-		aMask = 0x01;
-
-	// Make sure that we thought this button was down anyway - possibly not, if we 
-	//  disabled the widget already or something
-	mActualDownButtons &= ~aMask;
-	if ((mLastDownWidget != nullptr) && ((mDownButtons & aMask) != 0))
-	{
-		Widget* aLastDownWidget = mLastDownWidget;
-
-		mDownButtons &= ~aMask;		
-		if (mDownButtons == 0)
-			mLastDownWidget = nullptr;
-
-		aLastDownWidget->mIsDown = false;
-		aLastDownWidget->MouseUp(x - aLastDownWidget->mX, y - aLastDownWidget->mY, theClickCount);
-	}	
-	else
-		mDownButtons &= ~aMask;		
-
-	MousePosition(x, y);
-	
-	return true;
+	Finger *f = GetFinger(0);
+    bool result = FingerUp(f, x, y, theClickCount);
+    if (f) *f = {};
+    return result;
 }
 
 bool WidgetManager::MouseDown(int x, int y, int theClickCount) 
 {	
-	mLastInputUpdateCnt = mUpdateCnt;
-
-	if (theClickCount < 0)
-		mActualDownButtons |= 0x02;
-	else if (theClickCount == 3)
-		mActualDownButtons |= 0x04;
-	else
-		mActualDownButtons |= 0x01;
-
-	MousePosition(x, y);
-
-	if ((mPopupCommandWidget != nullptr) && (!mPopupCommandWidget->Contains(x, y)))
-		RemovePopupCommandWidget();
-
-	int aWidgetX;
-	int aWidgetY;
-	Widget* aWidget = GetWidgetAt(x, y, &aWidgetX, &aWidgetY);	
-
-	// This code passes all button downs to the mLastDownWidget 
-	if (mLastDownWidget != nullptr)
-		aWidget = mLastDownWidget;
-
-	if (theClickCount < 0)
-	{
-		mLastDownButtonId = -1;
-		mDownButtons |= 0x02;
-	}
-	else if (theClickCount == 3)
-	{
-		mLastDownButtonId = 2;
-		mDownButtons |= 0x04;
-	}
-	else
-	{
-		mLastDownButtonId = 1;
-		mDownButtons |= 0x01;
-	}
-	
-	mLastDownWidget = aWidget;
-	if (aWidget != nullptr)
-	{
-		if (aWidget->WantsFocus())
-			SetFocus(aWidget);
-		
-		aWidget->mIsDown = true;
-		aWidget->MouseDown(aWidgetX, aWidgetY, theClickCount);
-	}
-	
-	return true;
+	Finger *f = GetFinger(0);
+	return FingerDown(f, x, y, theClickCount);
 }
 
 bool WidgetManager::MouseMove(int x, int y) 
 {	
-	mLastInputUpdateCnt = mUpdateCnt;
-
-	if (mDownButtons)
-		return MouseDrag(x,y);
-
-	mMouseIn = true;
-	MousePosition(x, y);	
-			
-	return true;
+	Finger *f = GetFinger(0);
+	return FingerMove(f, x, y);
 }
 
 bool WidgetManager::MouseDrag(int x, int y) 
 {	
-	mLastInputUpdateCnt = mUpdateCnt;
-
-	mMouseIn = true;
-	mLastMouseX = x;
-	mLastMouseY = y;
-
-	if ((mOverWidget != nullptr) && (mOverWidget != mLastDownWidget))
-	{
-		Widget* anOverWidget = mOverWidget;
-		mOverWidget = nullptr;	
-		MouseLeave(anOverWidget);		
-	}
-
-	if (mLastDownWidget != nullptr)
-	{
-		Point anAbsPos = mLastDownWidget->GetAbsPos();
-
-		int aWidgetX = x - anAbsPos.mX;
-		int aWidgetY = y - anAbsPos.mY;		
-		mLastDownWidget->MouseDrag(aWidgetX, aWidgetY);		
-		
-		Widget* aWidgetOver = GetWidgetAt(x, y, nullptr, nullptr);
-
-		if ((aWidgetOver == mLastDownWidget) && (aWidgetOver != nullptr))
-		{
-			if (mOverWidget == nullptr)
-			{
-				mOverWidget = mLastDownWidget;
-				MouseEnter(mOverWidget);
-			}
-		}
-		else
-		{
-			if (mOverWidget != nullptr)
-			{
-				Widget* anOverWidget = mOverWidget;
-				mOverWidget = nullptr;	
-				MouseLeave(anOverWidget);				
-			}
-		}
-	}
-	
-	return true;	
+	Finger *f = GetFinger(0);
+	return FingerDrag(f, x, y);
 }
 
 bool WidgetManager::MouseExit(int x, int y)
 {
+#if 0 // TODO
 	(void)x;(void)y;
 	mLastInputUpdateCnt = mUpdateCnt;
 
@@ -751,6 +627,7 @@ bool WidgetManager::MouseExit(int x, int y)
 		mOverWidget = nullptr;
 	}
 	
+#endif
 	return true;
 }
 
@@ -812,4 +689,232 @@ bool WidgetManager::KeyUp(KeyCode key)
 		mFocusWidget->KeyUp(key);
 	
 	return true;
+}
+
+Finger *WidgetManager::GetFinger(SDL_FingerID theFingerID)
+{
+    Finger *aResult = NULL;
+    Finger *aFreeFinger = NULL;
+    for (Finger &aIter : mFingers)
+    {
+        if (aFreeFinger == NULL && !aIter.mUsed)
+            aFreeFinger = &aIter;
+        if (aIter.mUsed && aIter.mID == theFingerID)
+            aResult = &aIter;
+    }
+    
+    if (aResult == NULL && aFreeFinger != NULL)
+    {
+		*aFreeFinger = {};
+		aFreeFinger->mUsed = true;
+		aFreeFinger->mID = theFingerID;
+		aResult = aFreeFinger;
+    }
+
+    return aResult;
+}
+
+void WidgetManager::FingerPosition(Finger *f, int x, int y)
+{
+	if (!FingerValid(f))
+        return;
+    
+	int aLastMouseX = f->mLastMouseX;
+	int aLastMouseY = f->mLastMouseY;
+
+	f->mLastMouseX = x;
+	f->mLastMouseY = y;
+
+	mLastMouseX = x;
+	mLastMouseY = y;
+	
+	int aWidgetX;
+	int aWidgetY;
+	Widget* aWidget = GetWidgetAt(x, y, &aWidgetX, &aWidgetY);
+	
+	if (aWidget != f->mOverWidget)
+	{
+		Widget* aLastOverWidget = f->mOverWidget;
+		f->mOverWidget = nullptr;
+
+		if (aLastOverWidget != nullptr)
+			MouseLeave(aLastOverWidget);
+		
+		f->mOverWidget = aWidget;
+		if (aWidget != nullptr)
+		{
+			MouseEnter(aWidget);
+			aWidget->MouseMove(aWidgetX, aWidgetY);
+		}
+	}
+	else if ((aLastMouseX != x) || (aLastMouseY != y))
+	{
+		if (aWidget != nullptr)
+			aWidget->MouseMove(aWidgetX, aWidgetY);		
+	}
+}
+
+bool WidgetManager::FingerUp(Finger *f, int x, int y, int theClickCount)
+{
+	if (!FingerValid(f))
+        return false;
+    
+	mLastInputUpdateCnt = mUpdateCnt;
+	
+	int aMask;
+	
+	if (theClickCount < 0)
+		aMask = 0x02;
+	else if (theClickCount == 3)
+		aMask = 0x04;
+	else
+		aMask = 0x01;
+
+	// Make sure that we thought this button was down anyway - possibly not, if we 
+	//  disabled the widget already or something
+	mActualDownButtons &= ~aMask;
+	if ((f->mLastDownWidget != nullptr) && ((f->mDownButtons & aMask) != 0))
+	{
+		Widget* aLastDownWidget = f->mLastDownWidget;
+
+		f->mDownButtons &= ~aMask;
+		if (f->mDownButtons == 0)
+			f->mLastDownWidget = nullptr;
+
+		aLastDownWidget->mIsDown = false;
+		aLastDownWidget->MouseUp(x - aLastDownWidget->mX, y - aLastDownWidget->mY, theClickCount);
+	}	
+	else
+		f->mDownButtons &= ~aMask;
+    
+    FingerPosition(f, x, y);
+    
+	return true;
+}
+
+bool WidgetManager::FingerDown(Finger *f, int x, int y, int theClickCount)
+{
+	if (!FingerValid(f))
+        return false;
+    
+	mLastInputUpdateCnt = mUpdateCnt;
+
+	if (theClickCount < 0)
+		mActualDownButtons |= 0x02;
+	else if (theClickCount == 3)
+		mActualDownButtons |= 0x04;
+	else
+		mActualDownButtons |= 0x01;
+
+	FingerPosition(f, x, y);
+
+	if ((mPopupCommandWidget != nullptr) && (!mPopupCommandWidget->Contains(x, y)))
+		RemovePopupCommandWidget();
+
+	int aWidgetX;
+	int aWidgetY;
+	Widget* aWidget = GetWidgetAt(x, y, &aWidgetX, &aWidgetY);	
+
+	// This code passes all button downs to the mLastDownWidget 
+	if (f->mLastDownWidget != nullptr)
+		aWidget = f->mLastDownWidget;
+
+	if (theClickCount < 0)
+	{
+		mLastDownButtonId = -1;
+		f->mDownButtons |= 0x02;
+	}
+	else if (theClickCount == 3)
+	{
+		mLastDownButtonId = 2;
+		f->mDownButtons |= 0x04;
+	}
+	else
+	{
+		mLastDownButtonId = 1;
+		f->mDownButtons |= 0x01;
+	}
+
+	f->mLastDownWidget = aWidget;
+	if (aWidget != nullptr)
+	{
+		if (aWidget->WantsFocus())
+			SetFocus(aWidget);
+
+		aWidget->mIsDown = true;
+		aWidget->MouseDown(aWidgetX, aWidgetY, theClickCount);
+	}
+
+	return true;
+}
+
+bool WidgetManager::FingerMove(Finger *f, int x, int y)
+{
+	if (!FingerValid(f))
+        return false;
+    
+	mLastInputUpdateCnt = mUpdateCnt;
+
+	if (f->mDownButtons)
+		return FingerDrag(f, x, y);
+
+	mMouseIn = true;
+	FingerPosition(f, x, y);	
+
+	return true;
+}
+
+bool WidgetManager::FingerDrag(Finger *f, int x, int y)
+{
+	if (!FingerValid(f))
+        return false;
+    
+	mLastInputUpdateCnt = mUpdateCnt;
+
+	mMouseIn = true;
+	f->mLastMouseX = x;
+	f->mLastMouseY = y;
+
+	if ((f->mOverWidget != nullptr) && (f->mOverWidget != f->mLastDownWidget))
+	{
+		Widget* anOverWidget = f->mOverWidget;
+		f->mOverWidget = nullptr;	
+		MouseLeave(anOverWidget);		
+	}
+
+	if (f->mLastDownWidget != nullptr)
+	{
+		Point anAbsPos = f->mLastDownWidget->GetAbsPos();
+
+		int aWidgetX = x - anAbsPos.mX;
+		int aWidgetY = y - anAbsPos.mY;		
+		f->mLastDownWidget->MouseDrag(aWidgetX, aWidgetY);
+
+		Widget* aWidgetOver = GetWidgetAt(x, y, nullptr, nullptr);
+
+		if ((aWidgetOver == f->mLastDownWidget) && (aWidgetOver != nullptr))
+		{
+			if (f->mOverWidget == nullptr)
+			{
+				f->mOverWidget = f->mLastDownWidget;
+				MouseEnter(f->mOverWidget);
+			}
+		}
+		else
+		{
+			if (f->mOverWidget != nullptr)
+			{
+				Widget* anOverWidget = f->mOverWidget;
+				f->mOverWidget = nullptr;	
+				MouseLeave(anOverWidget);				
+			}
+		}
+	}
+
+	return true;	
+}
+
+bool WidgetManager::FingerValid(Finger *f)
+{
+	return (f && f->mUsed);
 }

@@ -1789,7 +1789,7 @@ void SexyAppBase::EndPopup()
 	ClearUpdateBacklog();
 	ClearKeysDown();
 
-	if (mWidgetManager->mDownButtons)
+	//if (mWidgetManager->mDownButtons)
 	{
 		mWidgetManager->DoMouseUps();
 		//ReleaseCapture();
@@ -3441,9 +3441,14 @@ void SexyAppBase::Init()
 	PreDisplayHook();
 
 	mWidgetManager->Resize(Rect(0, 0, mWidth, mHeight), Rect(0, 0, mWidth, mHeight));
+    
+#if defined(__ANDROID__) || defined(__SWITCH__)
+    SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");
+    SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+#endif
 
 	MakeWindow();
-
+    
 	if (mGLInterface == nullptr)
 	{
 		SDL_Log("FATAL: Failed to create OpenGL interface");
