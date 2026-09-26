@@ -367,6 +367,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 	SDL_Event event;
 	if (SDL_PollEvent(&event))
 	{
+		SDL_Log("EVENT:%X %s", event.type, SDL_GetEventName(event.type));
         HandleEvent(&event);
 		switch(event.type)
 		{
@@ -501,6 +502,23 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 				mLastUserInputTick = mLastTimerTime;
 				mWidgetManager->KeyChar((char)event.text.text[0]);
 				break;
+
+			//case SDL_FINGERDOWN:
+			//case SDL_FINGERUP:
+			//{
+			//	int x = (int)(event.tfinger.x * mGLInterface->mPresentationRect.mX);
+			//	int y = (int)(event.tfinger.y * mGLInterface->mPresentationRect.mY);
+			//	mWidgetManager->RemapMouse(x, y);
+			//	if (event.type == SDL_FINGERDOWN)
+			//	{
+			//		mWidgetManager->MouseDown(x, y, 1);
+			//	}
+			//	else
+			//	{
+			//		mWidgetManager->MouseUp(x, y, 1);
+			//	}
+			//	break;
+			//}
 		}
 	}
 
