@@ -3355,7 +3355,7 @@ void SexyAppBase::Init()
 	}
 #elif !defined(__SWITCH__) && !defined(__3DS__)
 	{
-		char* aPrefPath = SDL_GetPrefPath("", "ZumaPortable"); // Avoid conflict with official Zuma
+		char* aPrefPath = SDL_GetPrefPath("", "InsaniquariumPortable"); // Avoid conflict with official Insaniquarium
 		if (aPrefPath)
 		{
 			SetAppDataFolder(aPrefPath);
