@@ -40,6 +40,17 @@ file(GLOB SOURCES
 	src/SexyAppFramework/sound/*.cpp
 	src/SexyAppFramework/widget/*.cpp
 	src/SexyAppFramework/fcaseopen/*.c
+
+	src/WinFish/source/WinFish/*.h
+	src/SexyAppFramework/*.h
+	src/SexyAppFramework/graphics/*.h
+	src/SexyAppFramework/imagelib/*.h
+	src/SexyAppFramework/misc/*.h
+	src/SexyAppFramework/paklib/*.h
+	src/SexyAppFramework/sound/*.h
+	src/SexyAppFramework/widget/*.h
+	src/SexyAppFramework/fcaseopen/*.h
+
 	#src/SexyAppFramework/ogg/*.c
 	#src/*.cpp
 	#src/Sexy.TodLib/*.cpp
@@ -200,6 +211,7 @@ endif()
 target_include_directories(pvz-portable PRIVATE
 	${PLAT_INCLUDES}
 	${PROJECT_SOURCE_DIR}/src
+	${PROJECT_SOURCE_DIR}/src/WinFish/source/WinFish
 	${PROJECT_SOURCE_DIR}/src/SexyAppFramework
 	${PROJECT_SOURCE_DIR}/src/SexyAppFrameworkFlat
 	${PROJECT_SOURCE_DIR}/src/SexyAppFramework/sound/SDL-Mixer-X/include
