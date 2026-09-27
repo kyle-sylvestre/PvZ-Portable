@@ -132,7 +132,7 @@ jobs:
         New-Item -ItemType Directory -Force -Path dist | Out-Null
         New-Item -ItemType Directory -Force -Path dist/insaniquarium-portable | Out-Null
         Copy-Item build/insaniquarium-portable.exe dist/insaniquarium-portable
-        Copy-Item zuma/LICENSE.txt dist/insaniquarium-portable
+        Copy-Item insaniquarium/LICENSE.txt dist/insaniquarium-portable
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
@@ -191,7 +191,7 @@ jobs:
         New-Item -ItemType Directory -Force -Path dist/insaniquarium-portable | Out-Null
         Copy-Item build/insaniquarium-portable.exe dist/insaniquarium-portable
         Copy-Item build/insaniquarium-portable.pdb dist/insaniquarium-portable
-        Copy-Item zuma/LICENSE.txt dist/insaniquarium-portable
+        Copy-Item insaniquarium/LICENSE.txt dist/insaniquarium-portable
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
