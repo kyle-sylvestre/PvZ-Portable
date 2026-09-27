@@ -181,8 +181,8 @@ void SexyDumpUnfreed()
 	if (!f)
 		return;
 
-	time_t aTime = time(nullptr);
-	snprintf(buf, sizeof(buf), "Memory Leak Report for %s\n", asctime(localtime(&aTime)));
+	Time aTime = GetTime(nullptr);
+	snprintf(buf, sizeof(buf), "Memory Leak Report for %s\n", asctime(LocalTime(&aTime)));
 	fprintf(f, "%s", buf);
 	printf("\n%s", buf);
 	for(i = gSexyAllocMap.begin(); i != gSexyAllocMap.end(); i++) 

@@ -37,6 +37,9 @@
 #elif defined(__3DS__)
 #include <3ds.h>
 #elif defined(__ANDROID__) && !defined(__TERMUX__)
+#if UINTPTR_MAX == UINT32_MAX
+#include <time64.h>
+#endif
 #include <android/log.h>
 #endif
 
@@ -580,4 +583,30 @@ void Sexy::SMemWStr(void*& _Dst, const std::string& theString)
 	size_t aStrLen = theString.size();
 	SMemW(_Dst, &aStrLen, sizeof(aStrLen));
 	SMemW(_Dst, theString.c_str(), aStrLen);
+}
+
+Time Sexy::GetTime(Time *theTime)
+{
+	Time aResult = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    ).count();
+	if (theTime) *theTime = aResult;
+	return aResult;
+}
+
+struct tm *Sexy::LocalTime(Time *theTime)
+{
+    thread_local struct tm aResult;
+#if defined(_WIN32)
+    __time64_t aNativeTime = static_cast<__time64_t>(*theTime);
+    _localtime64_s(&aResult, &aNativeTime);
+#elif defined(__ANDROID__) && UINTPTR_MAX == UINT32_MAX
+	time64_t aNativeTime = static_cast<time64_t>(*theTime);
+    localtime64_r(&aNativeTime, &aResult);
+#else
+	static_assert(sizeof(time_t) == 8, "time_t must be 64-bit");
+    time_t aNativeTime = static_cast<time_t>(*theTime);
+    localtime_r(&aNativeTime, &aResult);
+#endif
+	return &aResult;
 }

@@ -58,7 +58,6 @@ typedef std::map<std::string, int> StringToIntMap;
 typedef std::map<std::string, FileMod> FileModMap;
 
 static StringToIntMap gStringToIntMap;
-time_t gLastFileTime = 0;
 const char *gSampleString = nullptr; // for finding the others
 
 static FileModMap& GetFileModMap()

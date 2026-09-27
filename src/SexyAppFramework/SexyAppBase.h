@@ -238,8 +238,8 @@ public:
 	bool					mHasPendingDraw;
 	double					mPendingUpdatesAcc;
 	double					mUpdateFTimeAcc;
-	time_t					mLastTimeCheck;
-	time_t					mLastTime;
+	uint32_t				mLastTimeCheck;
+	uint32_t				mLastTime;
 	uint32_t				mLastUserInputTick;
 
 	int						mSleepCount;

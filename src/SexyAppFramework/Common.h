@@ -53,15 +53,14 @@
 #include <mmsystem.h>
 #else
 #include <strings.h>
-#undef _S // nintendo switch redefinition
-#define _S(x) x
-typedef time_t __time64_t;
 typedef void *HWND, *HFONT;
 typedef unsigned int DWORD;
-#define _time64 time
-#define _localtime64 localtime
 #define stricmp strcasecmp
 #endif
+
+// no conversion from std::string to SexyString
+#undef _S // nintendo switch redefinition
+#define _S(x) x
 
 #include <SDL2/SDL.h>
 typedef std::string SexyString;
@@ -71,6 +70,17 @@ typedef char SexyChar;
 #undef min
 #undef max
 
+#define LENGTH(anyarray) (sizeof(anyarray) / sizeof(anyarray[0]))
+
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+typedef unsigned long ulong;
+typedef int64_t int64;
+typedef int64_t Time;
+
+typedef std::map<std::string, std::string> DefinesMap;
+typedef std::vector<char> CharVector;
 
 // Define unreachable()
 #ifdef _MSC_VER
@@ -92,8 +102,8 @@ inline int nanosleep(const struct timespec* ts, struct timespec* rem)
 
 	// SetWaitableTimer() defines interval in 100ns units.
 	// negative is to indicate relative time.
-	time_t sec = ts->tv_sec;
-	long nsec = ts->tv_nsec;
+	Time sec = ts->tv_sec;
+	Time nsec = ts->tv_nsec;
 	if (sec < 0 || (sec == 0 && nsec <= 0))
 	{
 		CloseHandle(timer);
@@ -118,17 +128,6 @@ inline int nanosleep(const struct timespec* ts, struct timespec* rem)
 #define unreachable() ((void)0)
 #endif
 
-#define LENGTH(anyarray) (sizeof(anyarray) / sizeof(anyarray[0]))
-
-typedef unsigned char uchar;
-typedef unsigned short ushort;
-typedef unsigned int uint;
-typedef unsigned long ulong;
-typedef int64_t int64;
-
-typedef std::map<std::string, std::string> DefinesMap;
-typedef std::vector<char> CharVector;
-
 namespace Sexy
 {
 
@@ -139,6 +138,8 @@ extern bool			gDebug;
 #define printf(...) Sexy::PrintF(__VA_ARGS__)
 void				PrintF(const char *text, ...);
 
+Time 				GetTime(Time *theTime = NULL);
+struct tm *			LocalTime(Time *theTime);
 int					Rand();
 int					Rand(int range);
 float				Rand(float range);
