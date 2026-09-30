@@ -32,6 +32,7 @@ class ButtonListener
 {
 public:
 	virtual void			ButtonPress(int theId) {}
+	virtual void			ButtonPress(int theId, int theClickCount) { ButtonPress(theId); }
 	virtual void			ButtonDepress(int theId) {}
 	virtual void			ButtonDownTick(int theId) {}
 	virtual void			ButtonMouseEnter(int theId) {}
