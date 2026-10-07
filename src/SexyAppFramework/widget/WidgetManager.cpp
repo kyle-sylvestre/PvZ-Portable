@@ -874,6 +874,9 @@ bool WidgetManager::FingerDrag(Finger *f, int x, int y)
 	mMouseIn = true;
 	f->mLastMouseX = x;
 	f->mLastMouseY = y;
+    
+    mLastMouseX = x;
+    mLastMouseY = y;
 
 	if ((f->mOverWidget != nullptr) && (f->mOverWidget != f->mLastDownWidget))
 	{
