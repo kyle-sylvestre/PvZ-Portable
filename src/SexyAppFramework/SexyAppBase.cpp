@@ -3442,10 +3442,9 @@ void SexyAppBase::Init()
 
 	mWidgetManager->Resize(Rect(0, 0, mWidth, mHeight), Rect(0, 0, mWidth, mHeight));
     
-#if defined(__ANDROID__) || defined(__SWITCH__)
-    SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");
+    // disable synthetic events on mouse/touch
+    SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
     SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-#endif
 
 	MakeWindow();
     
