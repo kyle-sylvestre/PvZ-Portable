@@ -266,6 +266,7 @@ SexyAppBase::SexyAppBase()
 	mEnableMaximizeButton = false;
 	mWriteToSexyCache = true;
 	mSexyCacheBuffers = false;
+    mFingerEvents = false;
 
 	mMusicVolume = 0.85;
 	mSfxVolume = 0.85;
