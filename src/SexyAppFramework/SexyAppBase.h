@@ -181,6 +181,7 @@ public:
 	bool					mbAllowExtendedChars;
 
 
+    bool                    mFingerEvents;
 	bool					mOnlyAllowOneCopyToRun;
 	unsigned int			mNotifyGameMessage;
 	std::mutex				mCritSect;	

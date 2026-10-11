@@ -393,7 +393,14 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 		//		SDL_PushEvent(&ev);
 		//	}
 		//}
-
+        
+        if (event.type == SDL_FINGERUP ||
+            event.type == SDL_FINGERDOWN ||
+            event.type == SDL_FINGERMOTION)
+        {
+            mFingerEvents = true;
+        }
+        
 		//SDL_Log("EVENT:%04X", event.type);
         HandleEvent(&event);
 		switch(event.type)
