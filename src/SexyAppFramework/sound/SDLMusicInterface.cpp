@@ -82,6 +82,7 @@ void SDLMusicInterface::PlayMusic(int theSongId, int theOffset, bool noLoop)
 
 		Mix_HaltMusicStream(aMusicInfo->mHMusic);
 		Mix_PlayMusicStream(aMusicInfo->mHMusic, (noLoop) ? 0 : -1);
+        Mix_VolumeMusicStream(aMusicInfo->mHMusic, (int)(aMusicInfo->mVolume*128));
 		if (theOffset > 0)
 			Mix_ModMusicStreamJumpToOrder(aMusicInfo->mHMusic, theOffset);
 	}
