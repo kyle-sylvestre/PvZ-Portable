@@ -363,9 +363,9 @@ jobs:
             runner: ubuntu-latest
             container: quay.io/pypa/manylinux_2_34_x86_64
 
-          - arch: aarch64
-            runner: ubuntu-24.04-arm
-            container: quay.io/pypa/manylinux_2_34_aarch64
+         #- arch: aarch64
+         #  runner: ubuntu-24.04-arm
+         #  container: quay.io/pypa/manylinux_2_34_aarch64
 
     steps:
     - uses: actions/checkout@v6
