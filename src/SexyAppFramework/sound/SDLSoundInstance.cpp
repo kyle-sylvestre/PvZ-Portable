@@ -31,6 +31,7 @@ SDLSoundInstance::SDLSoundInstance(SDLSoundManager* theSoundManager, Mix_Chunk* 
 {
 	mSoundManagerP = theSoundManager;
 	mMixChunk = theSourceSound;
+    mMixChunkPitched = NULL;
 	mReleased = false;
 	mAutoRelease = false;
 	mHasPlayed = false;
@@ -57,6 +58,7 @@ SDLSoundInstance::~SDLSoundInstance()
 void SDLSoundInstance::RehupVolume()
 {
 	Mix_VolumeChunk(mMixChunk, (mBaseVolume * mVolume * mSoundManagerP->mMasterVolume) * 128);
+    Mix_VolumeChunk(mMixChunkPitched, (mBaseVolume * mVolume * mSoundManagerP->mMasterVolume) * 128);
 }
 
 void SDLSoundInstance::RehupPan()
@@ -207,16 +209,28 @@ bool SDLSoundInstance::Play(bool looping, bool autoRelease)
 	Stop();
 
 	mHasPlayed = true;	
-	mAutoRelease = autoRelease;	
+	mAutoRelease = autoRelease;
+    
+    Mix_Chunk *aMixChunk = mMixChunk;
+    if (mPitch < 1.0)
+    {
+        mMixChunkPitched = mSoundManagerP->GetPitchedSound(mMixChunk, mPitch);
+        if (mMixChunkPitched)
+        {
+            RehupVolume();
+            aMixChunk = mMixChunkPitched;
+            mPitch = 1.0;
+        }
+    }
 
-	if (!mMixChunk)
+	if (!aMixChunk)
 		return false;
 
 	const int aTargetChannel = (mReservedChannel >= 0 && mReservedChannel < MAX_CHANNELS) ? mReservedChannel : -1;
-	mChannel = Mix_PlayChannel(aTargetChannel, mMixChunk, (looping) ? -1 : 0);
+	mChannel = Mix_PlayChannel(aTargetChannel, aMixChunk, (looping) ? -1 : 0);
 	if (mChannel != -1)
 	{
-		CreateSoundPitchHandler(mMixChunk, &mPitch, looping, 0);
+		CreateSoundPitchHandler(aMixChunk, &mPitch, looping, 0);
 		Mix_RegisterEffect(mChannel, PitchHandlerFuncCallback, 0, &mPitchHandler);
 		return true;
 	}

@@ -579,3 +579,59 @@ void SDLSoundManager::ReleaseFreeChannels()
 		}
 	}
 }
+
+Mix_Chunk *SDLSoundManager::GetPitchedSound(Mix_Chunk *theChunk, double thePitch)
+{
+	// TODO: SDL3_mixer MIX_SetTrackFrequencyRatio
+    Mix_Chunk *result = NULL;
+    PitchedSound aPitchedSound = {};
+    aPitchedSound.mChunk = theChunk;
+    aPitchedSound.mPitch = thePitch;
+    auto it = mPitchedSounds.find(aPitchedSound);
+    if (it == mPitchedSounds.end())
+    {
+        int channels = 0;
+        int frequency = 0;
+        SDL_AudioFormat format = {};
+        Mix_QuerySpec(&frequency, &format, &channels);
+
+        SDL_AudioCVT cvt = {};
+        if (SDL_BuildAudioCVT(&cvt,
+            format, channels, frequency,
+            format, channels, frequency / thePitch) >= 0)
+        {
+            cvt.len = theChunk->alen;
+            cvt.buf = (Uint8*)SDL_malloc(cvt.len * cvt.len_mult);
+            if (cvt.buf)
+            {
+                SDL_memcpy(cvt.buf, theChunk->abuf, theChunk->alen);
+                if (SDL_ConvertAudio(&cvt) == 0)
+                {
+                    Mix_Chunk *chunk = (Mix_Chunk*)SDL_calloc(1, sizeof(Mix_Chunk));
+                    if (chunk)
+                    {
+                        chunk->allocated = 1;
+                        chunk->abuf = cvt.buf;
+                        chunk->alen = cvt.len_cvt;
+                        chunk->volume = MIX_MAX_VOLUME;
+                        mPitchedSounds[aPitchedSound] = chunk;
+                        result = chunk;
+                    }
+                    else
+                    {
+                        SDL_free(cvt.buf);
+                    }
+                }
+                else
+                {
+                    SDL_free(cvt.buf);
+                }
+            }
+        }
+    }
+    else
+    {
+        result = it->second;
+    }
+    return result;
+}

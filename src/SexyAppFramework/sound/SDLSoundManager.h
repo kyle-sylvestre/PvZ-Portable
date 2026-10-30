@@ -32,6 +32,19 @@
 namespace Sexy
 {
 
+struct PitchedSound
+{
+    Mix_Chunk *mChunk;
+    double mPitch;
+    
+    bool operator<(const PitchedSound& other) const
+    {
+        if (mChunk != other.mChunk)
+            return mChunk < other.mChunk;
+
+        return mPitch < other.mPitch;
+    }};
+
 class SDLSoundInstance;
 
 class SDLSoundManager : public SoundManager
@@ -50,6 +63,7 @@ protected:
 	int						mMixerFreq;
 	uint16_t				mMixerFormat;
 	int						mMixerChannels;
+    std::map<PitchedSound, Mix_Chunk*> mPitchedSounds;
 
 protected:
 	int						FindFreeChannel();
@@ -82,6 +96,7 @@ public:
 	virtual void			StopAllSounds();
 	virtual intptr_t		GetFreeSoundId();
 	virtual int				GetNumSounds();
+    Mix_Chunk *             GetPitchedSound(Mix_Chunk *theChunk, double thePitch);
 };
 
 }

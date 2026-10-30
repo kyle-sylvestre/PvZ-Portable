@@ -59,6 +59,7 @@ class SDLSoundInstance : public SoundInstance
 protected:
 	SDLSoundManager*		mSoundManagerP;
 	Mix_Chunk*				mMixChunk;
+    Mix_Chunk*              mMixChunkPitched;
 	bool					mAutoRelease;
 	bool					mHasPlayed;
 	bool					mReleased;
